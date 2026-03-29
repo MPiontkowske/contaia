@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ContaIA — Criar Conta</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;--border:#2a2a2a;--gold:#d4a843;--rust:#c0392b;--text:#e8e8e8;--muted:#777;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:100%;max-width:420px}
+.brand{text-align:center;margin-bottom:40px}
+.brand-name{font-size:32px;font-weight:700;color:var(--gold);letter-spacing:-1px}
+.brand-name span{color:var(--text)}
+.brand-sub{font-size:13px;color:var(--muted);margin-top:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px}
+.card-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.trial-badge{display:inline-block;padding:4px 12px;background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.3);border-radius:20px;font-size:12px;color:var(--gold);font-weight:500;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:.15s}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
+.btn{width:100%;padding:12px;background:var(--gold);color:#000;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.btn:hover{background:#e6ba50}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:12px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none}
+.alert.show{display:block}
+.alert-err{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c}
+.footer-link{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.footer-link a{color:var(--gold);text-decoration:none}
+.perks{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.perk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.perk::before{content:'✓';color:var(--gold);font-weight:700;flex-shrink:0}
+.spinner{width:15px;height:15px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">Conta<span>IA</span></div>
+    <div class="brand-sub">Assistente de IA para contadores brasileiros</div>
+  </div>
+  <div class="card">
+    <div class="trial-badge">7 dias grátis — sem cartão</div>
+    <div class="card-title">Criar sua conta</div>
+    <div class="card-sub">Acesso completo durante o período de teste.</div>
+    <div class="perks">
+      <div class="perk">Gerador de cobranças com IA</div>
+      <div class="perk">Relatórios gerenciais automáticos</div>
+      <div class="perk">Comunicação com a Receita Federal</div>
+      <div class="perk">Textos prontos em segundos</div>
+    </div>
+    <div class="alert alert-err" id="alert"></div>
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="name" placeholder="João da Silva">
+    </div>
+    <div class="form-group">
+      <label>E-mail profissional</label>
+      <input type="email" id="email" placeholder="joao@escritorio.com.br">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="password" placeholder="mínimo 6 caracteres">
+    </div>
+    <button class="btn" id="btn" onclick="doRegister()">
+      <div class="spinner" id="spin"></div>
+      <span id="btn-text">Criar conta grátis</span>
+    </button>
+    <div class="footer-link">Já tem conta? <a href="/login">Entrar</a></div>
+  </div>
+</div>
+<script>
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doRegister()});
+async function doRegister(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const pwd=document.getElementById('password').value;
+  const alert=document.getElementById('alert');
+  const btn=document.getElementById('btn');
+  const spin=document.getElementById('spin');
+  const txt=document.getElementById('btn-text');
+  if(!name||!email||!pwd){showAlert('Preencha todos os campos.');return}
+  if(pwd.length<6){showAlert('Senha deve ter pelo menos 6 caracteres.');return}
+  btn.disabled=true;spin.classList.add('show');txt.textContent='Criando conta...';
+  alert.classList.remove('show');
+  try{
+    const r=await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pwd})});
+    const d=await r.json();
+    if(d.ok){window.location.href='/dashboard'}
+    else{showAlert(d.error||'Erro ao criar conta.')}
+  }catch(e){showAlert('Erro de conexão.')}
+  btn.disabled=false;spin.classList.remove('show');txt.textContent='Criar conta grátis';
+}
+function showAlert(msg){const a=document.getElementById('alert');a.textContent=msg;a.classList.add('show')}
+</script>
+</body>
+</html>

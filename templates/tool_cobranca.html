@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Cobranças — ContaIA{% endblock %}
+{% block body %}
+<div class="page">
+  <div style="margin-bottom:28px">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ferramenta</div>
+    <h1 style="font-size:20px;font-weight:700">💼 Cobranças de Honorários</h1>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">Gere o texto certo para cada situação de cobrança.</p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="setTab(0,'cobranca_lembrete1')">1º Lembrete</button>
+    <button class="tab" onclick="setTab(1,'cobranca_lembrete2')">2º Lembrete</button>
+    <button class="tab" onclick="setTab(2,'cobranca_parcelamento')">Parcelamento</button>
+    <button class="tab" onclick="setTab(3,'cobranca_reajuste')">Reajuste</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+
+    <!-- FORM -->
+    <div class="card">
+      <div class="card-title">Dados do cliente</div>
+      <div class="alert" id="alert" style="display:none;padding:12px;border-radius:8px;font-size:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c;margin-bottom:16px"></div>
+
+      <!-- TAB 0: lembrete 1 -->
+      <div id="form-0">
+        <div class="form-group"><label>Nome do cliente</label><input id="f0-cliente" placeholder="João da Silva"></div>
+        <div class="form-group"><label>Nome da empresa</label><input id="f0-empresa" placeholder="Silva & Associados Ltda"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor (R$)</label><input id="f0-valor" placeholder="1.200,00"></div>
+          <div class="form-group"><label>Data de vencimento</label><input id="f0-vencimento" placeholder="10/01/2026"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Seu nome</label><input id="f0-contador" placeholder="Dra. Ana Lima"></div>
+          <div class="form-group"><label>Nome do escritório</label><input id="f0-escritorio" placeholder="Lima Contabilidade"></div>
+        </div>
+      </div>
+
+      <!-- TAB 1: lembrete 2 -->
+      <div id="form-1" style="display:none">
+        <div class="form-group"><label>Nome do cliente</label><input id="f1-cliente" placeholder="João da Silva"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor (R$)</label><input id="f1-valor" placeholder="1.200,00"></div>
+          <div class="form-group"><label>Dias em atraso</label><input id="f1-dias" placeholder="15"></div>
+        </div>
+        <div class="form-group"><label>Seu nome</label><input id="f1-contador" placeholder="Dra. Ana Lima"></div>
+      </div>
+
+      <!-- TAB 2: parcelamento -->
+      <div id="form-2" style="display:none">
+        <div class="form-group"><label>Nome do cliente</label><input id="f2-cliente" placeholder="João da Silva"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor total (R$)</label><input id="f2-valor" placeholder="3.600,00"></div>
+          <div class="form-group"><label>Meses em atraso</label><input id="f2-meses" placeholder="3"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Parcelas propostas</label><input id="f2-parcelas" placeholder="3"></div>
+          <div class="form-group"><label>Seu nome</label><input id="f2-contador" placeholder="Dra. Ana Lima"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: reajuste -->
+      <div id="form-3" style="display:none">
+        <div class="form-group"><label>Nome do cliente</label><input id="f3-cliente" placeholder="João da Silva"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor atual (R$)</label><input id="f3-valor_atual" placeholder="800,00"></div>
+          <div class="form-group"><label>Percentual de reajuste (%)</label><input id="f3-percentual" placeholder="12"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data de vigência</label><input id="f3-data_vigencia" placeholder="01/02/2026"></div>
+          <div class="form-group"><label>Seu nome</label><input id="f3-contador" placeholder="Dra. Ana Lima"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()" style="margin-top:8px">
+        <div class="spinner" id="spin"></div>
+        <span id="btn-txt">Gerar texto com IA</span>
+      </button>
+    </div>
+
+    <!-- RESULT -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Resultado</div>
+        <div id="placeholder" style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">
+          Preencha os dados e clique em gerar.
+        </div>
+        <div class="result-box" id="result">
+          <button class="result-copy" onclick="copyResult()">Copiar</button>
+          <div id="result-text"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentTab = 0;
+let currentTool = 'cobranca_lembrete1';
+
+function setTab(n, tool) {
+  currentTab = n; currentTool = tool;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<4;i++) document.getElementById('form-'+i).style.display = i===n?'block':'none';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('placeholder').style.display='block';
+}
+
+function getCampos() {
+  const p = 'f'+currentTab+'-';
+  const ids = [...document.querySelectorAll('[id^="'+p+'"]')];
+  const campos = {};
+  ids.forEach(el => { campos[el.id.replace(p,'')] = el.value.trim(); });
+  return campos;
+}
+
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  const spin = document.getElementById('spin');
+  const txt = document.getElementById('btn-txt');
+  const alert = document.getElementById('alert');
+  alert.style.display='none';
+  btn.disabled=true; spin.classList.add('show'); txt.textContent='Gerando...';
+  try {
+    const r = await fetch('/api/gerar',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tool:currentTool, campos:getCampos()})});
+    const d = await r.json();
+    if(d.resultado){
+      document.getElementById('result-text').textContent = d.resultado;
+      document.getElementById('result').classList.add('show');
+      document.getElementById('placeholder').style.display='none';
+    } else {
+      alert.textContent = d.error||'Erro ao gerar.'; alert.style.display='block';
+    }
+  } catch(e){ alert.textContent='Erro de conexão.'; alert.style.display='block'; }
+  btn.disabled=false; spin.classList.remove('show'); txt.textContent='Gerar texto com IA';
+}
+
+function copyResult(){
+  const txt = document.getElementById('result-text').textContent;
+  navigator.clipboard.writeText(txt);
+  const btn = document.querySelector('.result-copy');
+  btn.textContent='Copiado!'; setTimeout(()=>btn.textContent='Copiar',2000);
+}
+</script>
+{% endblock %}

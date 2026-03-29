@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta — ContaIA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090f; --surface: #111118; --surface-2: #18181f;
+      --border: rgba(255,255,255,.07); --border-2: rgba(255,255,255,.12);
+      --gold: #d4a843; --gold-dim: rgba(212,168,67,.12);
+      --text: #e8e8e0; --text-dim: #888; --text-faint: #555;
+      --green: #22c55e; --green-dim: rgba(34,197,94,.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,.12);
+      --radius: 8px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-wrap { width: 100%; max-width: 460px; }
+
+    .brand { text-align: center; margin-bottom: 28px; }
+    .brand-name { font-size: 1.8rem; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+    .brand-name span { color: var(--gold); }
+    .brand-tagline { font-size: .85rem; color: var(--text-faint); margin-top: 5px; }
+
+    .trial-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-dim);
+      border: 1px solid rgba(212,168,67,.3);
+      color: var(--gold);
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      font-size: .78rem;
+      color: var(--text-dim);
+    }
+    .feature-item .check { color: var(--green); font-size: .85rem; flex-shrink: 0; margin-top: 1px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+    }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 13px; }
+    .form-label { display: block; font-size: .78rem; font-weight: 600; color: var(--text-dim); margin-bottom: 5px; }
+    .form-control {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 10px 13px;
+      font-size: .9rem;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-control:focus { border-color: var(--gold); }
+    .form-control::placeholder { color: var(--text-faint); }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 11px 20px;
+      background: var(--gold); color: #000;
+      border: none; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s; margin-top: 6px;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn:not(:disabled):hover { opacity: .88; }
+
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(0,0,0,.25); border-top-color: #000;
+      border-radius: 50%; animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .alert {
+      padding: 10px 14px; border-radius: var(--radius);
+      font-size: .82rem; margin-bottom: 12px; display: none;
+      background: var(--red-dim); border: 1px solid rgba(239,68,68,.25); color: #fca5a5;
+    }
+    .alert.show { display: block; }
+
+    .terms {
+      font-size: .72rem;
+      color: var(--text-faint);
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+
+    .auth-footer {
+      text-align: center; margin-top: 20px;
+      font-size: .82rem; color: var(--text-faint);
+    }
+    .auth-footer a { color: var(--gold); }
+  </style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="brand">
+    <div class="brand-name">Conta<span>IA</span></div>
+    <div class="brand-tagline">Copiloto de IA para escritórios contábeis</div>
+  </div>
+
+  <div style="text-align:center">
+    <div class="trial-badge">⚡ 7 dias grátis — sem cartão de crédito</div>
+  </div>
+
+  <div class="features">
+    <div class="feature-item"><span class="check">✓</span> Cobranças sem constrangimento</div>
+    <div class="feature-item"><span class="check">✓</span> Relatórios em linguagem simples</div>
+    <div class="feature-item"><span class="check">✓</span> Comunicações com o Fisco</div>
+    <div class="feature-item"><span class="check">✓</span> Histórico de gerações</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Criar sua conta gratuita</div>
+
+    <div class="alert" id="alert-msg"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="name">Nome completo</label>
+      <input class="form-control" type="text" id="name" placeholder="Seu nome" autocomplete="name" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="email">E-mail profissional</label>
+      <input class="form-control" type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Senha</label>
+      <input class="form-control" type="password" id="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+    </div>
+
+    <button class="btn" id="btn-reg" onclick="register()">
+      <span id="btn-text">Criar conta grátis</span>
+      <div class="spinner" id="spinner" style="display:none"></div>
+    </button>
+
+    <div class="terms">Ao criar sua conta você concorda com os termos de uso. Cancele quando quiser.</div>
+  </div>
+
+  <div class="auth-footer">
+    Já tem conta? <a href="/login">Entrar</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+
+  async function register() {
+    const name    = document.getElementById('name').value.trim();
+    const email   = document.getElementById('email').value.trim();
+    const pwd     = document.getElementById('password').value;
+    const btn     = document.getElementById('btn-reg');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btn-text');
+
+    if (!name || !email || !pwd) { showError('Preencha todos os campos.'); return; }
+    if (pwd.length < 6) { showError('Senha deve ter ao menos 6 caracteres.'); return; }
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Criando conta…';
+    document.getElementById('alert-msg').classList.remove('show');
+
+    try {
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password: pwd }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        window.location.href = '/dashboard';
+      } else {
+        showError(data.error || 'Erro ao criar conta.');
+      }
+    } catch {
+      showError('Erro de conexão. Tente novamente.');
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Criar conta grátis';
+    }
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('alert-msg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+</script>
+</body>
+</html>

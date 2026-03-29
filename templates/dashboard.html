@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ContaIA{% endblock %}
+{% block body %}
+<div class="page">
+
+  <!-- TRIAL BANNER -->
+  {% if user.plan == 'trial' and trial_days is not none %}
+  <div style="background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.25);border-radius:8px;padding:14px 20px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <span style="color:var(--gold);font-weight:600;font-size:13px">Período de teste</span>
+      <span style="color:var(--muted);font-size:13px;margin-left:8px">{{ trial_days }} dia(s) restante(s)</span>
+    </div>
+    <span style="font-size:12px;color:var(--muted)">Assine para manter o acesso após o período de teste.</span>
+  </div>
+  {% endif %}
+
+  {% if not access %}
+  <div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);border-radius:8px;padding:14px 20px;margin-bottom:28px">
+    <span style="color:#e74c3c;font-weight:600">Acesso encerrado.</span>
+    <span style="color:var(--muted);font-size:13px;margin-left:8px">Seu período de teste expirou. Entre em contato para assinar.</span>
+  </div>
+  {% endif %}
+
+  <!-- HEADER -->
+  <div style="margin-bottom:32px">
+    <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">Olá, {{ user.name.split()[0] }}</h1>
+    <p style="color:var(--muted);font-size:13px">Selecione uma ferramenta para começar.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="stat-val">{{ total_uses }}</div>
+      <div class="stat-label">Textos gerados</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">3</div>
+      <div class="stat-label">Ferramentas</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ '∞' if user.plan == 'active' else (trial_days|string + 'd') }}</div>
+      <div class="stat-label">{{ 'Acesso ativo' if user.plan == 'active' else 'Restantes' }}</div>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+
+    <a href="/ferramenta/cobranca" style="text-decoration:none" class="tool-card-link">
+      <div class="card" style="cursor:pointer;transition:.15s;border-color:{% if not access %}var(--border){% else %}var(--border){% endif %}" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:14px">💼</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)">Cobranças</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Gere e-mails de cobrança, propostas de parcelamento e comunicados de reajuste de honorários com o tom certo.</div>
+        <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">1º lembrete</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">2º lembrete</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Parcelamento</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Reajuste</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="/ferramenta/relatorio" style="text-decoration:none">
+      <div class="card" style="cursor:pointer;transition:.15s" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:14px">📊</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)">Relatórios</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Transforme números em textos claros para o cliente. Relatório mensal, análise de DRE, comparativo e resumo anual.</div>
+        <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Mensal</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">DRE</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Comparativo</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Anual</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="/ferramenta/receita" style="text-decoration:none">
+      <div class="card" style="cursor:pointer;transition:.15s" onmouseenter="this.style.borderColor='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <div style="font-size:28px;margin-bottom:14px">🏛️</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)">Receita Federal</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Respostas a intimações, defesas em autos de infração, comunicados ao cliente e solicitações de parcelamento fiscal.</div>
+        <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Intimação</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Defesa</span>
+          <span style="font-size:10px;padding:2px 8px;background:var(--surface2);border-radius:4px;color:var(--muted)">Parcelamento</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</div>
+{% endblock %}

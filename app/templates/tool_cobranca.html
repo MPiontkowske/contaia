@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% block title %}Cobranças — ContaIA{% endblock %}
+
+{% block extra_head %}
+<style>
+.template-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+}
+.template-bar select { flex: 1; background: transparent; border: none; color: var(--text-dim); font-size: .82rem; outline: none; cursor: pointer; }
+.template-bar select option { background: var(--surface-2); }
+.save-tmpl-form {
+  display: none;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+.save-tmpl-form .inner { display: flex; gap: 8px; }
+.feedback-row {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.feedback-row span { font-size: .78rem; color: var(--text-faint); }
+.btn-feedback { background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: .9rem; color: var(--text-dim); transition: background .15s, border-color .15s; }
+.btn-feedback:hover { background: var(--surface-3); border-color: var(--border-2); }
+.btn-feedback.selected-pos { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+.btn-feedback.selected-neg { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">💼 Cobranças de Honorários</div>
+  <div class="page-subtitle">Gere comunicações profissionais sem constrangimento.</div>
+</div>
+
+<div class="page-body">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start">
+
+  <!-- Coluna esquerda: formulário -->
+  <div>
+    <div class="card">
+
+      <!-- Seletor de templates -->
+      <div class="template-bar" id="template-bar">
+        <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
+        <select id="template-select" onchange="loadTemplate(this.value)">
+          <option value="">— Formulário em branco —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="btn-del-tmpl" onclick="deleteTemplate()" style="display:none" title="Remover template">✕</button>
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="0">1º Lembrete</button>
+        <button class="tab-btn" data-tab="1">2º Lembrete</button>
+        <button class="tab-btn" data-tab="2">Parcelamento</button>
+        <button class="tab-btn" data-tab="3">Reajuste</button>
+      </div>
+
+      <!-- Tab 0 -->
+      <div class="tab-pane active" id="tab-0">
+        <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t0-cliente" placeholder="Ex: João Silva"></div>
+        <div class="form-group"><label class="form-label">Empresa do cliente</label><input class="form-control" id="t0-empresa" placeholder="Ex: Padaria do João Ltda"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-control" id="t0-valor" placeholder="Ex: 850,00"></div>
+          <div class="form-group"><label class="form-label">Vencimento</label><input class="form-control" id="t0-vencimento" placeholder="Ex: 05/01/2025"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t0-contador" placeholder="Ex: Carlos Souza"></div>
+          <div class="form-group"><label class="form-label">Escritório</label><input class="form-control" id="t0-escritorio" placeholder="Ex: Souza Contabilidade"></div>
+        </div>
+      </div>
+
+      <!-- Tab 1 -->
+      <div class="tab-pane" id="tab-1">
+        <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t1-cliente" placeholder="Ex: João Silva"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Valor (R$)</label><input class="form-control" id="t1-valor" placeholder="Ex: 850,00"></div>
+          <div class="form-group"><label class="form-label">Dias em atraso</label><input class="form-control" id="t1-dias" placeholder="Ex: 30"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t1-contador" placeholder="Ex: Carlos Souza"></div>
+      </div>
+
+      <!-- Tab 2 -->
+      <div class="tab-pane" id="tab-2">
+        <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t2-cliente" placeholder="Ex: João Silva"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Valor total (R$)</label><input class="form-control" id="t2-valor" placeholder="Ex: 2.550,00"></div>
+          <div class="form-group"><label class="form-label">Meses em atraso</label><input class="form-control" id="t2-meses" placeholder="Ex: 3"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Parcelas propostas</label><input class="form-control" id="t2-parcelas" placeholder="Ex: 3"></div>
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t2-contador" placeholder="Ex: Carlos Souza"></div>
+        </div>
+      </div>
+
+      <!-- Tab 3 -->
+      <div class="tab-pane" id="tab-3">
+        <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t3-cliente" placeholder="Ex: João Silva"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Valor atual (R$)</label><input class="form-control" id="t3-valor_atual" placeholder="Ex: 850,00"></div>
+          <div class="form-group"><label class="form-label">% de reajuste</label><input class="form-control" id="t3-percentual" placeholder="Ex: 12"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Vigência a partir de</label><input class="form-control" id="t3-data_vigencia" placeholder="Ex: 01/02/2025"></div>
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t3-contador" placeholder="Ex: Carlos Souza"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
+        <span id="btn-text">Gerar texto</span>
+        <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
+      </button>
+
+      <!-- Salvar como template (inline) -->
+      <div class="save-tmpl-form" id="save-tmpl-form">
+        <div style="font-size:.75rem; color:var(--text-faint); margin-bottom:6px">Salvar campos atuais como template:</div>
+        <div class="inner">
+          <input class="form-control" id="tmpl-nome" placeholder="Ex: Cobrança padrão — João Silva" style="font-size:.83rem">
+          <button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-tmpl-form').style.display='none'">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna direita: resultado + histórico -->
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Resultado</div>
+        <div id="result-actions" style="display:none; display:none; gap:8px; flex-wrap:wrap; margin-top:0" class="result-actions">
+          <button class="btn btn-outline btn-sm" onclick="copiarResultado()">⎘ Copiar</button>
+          <button class="btn btn-outline btn-sm" id="btn-fav" onclick="favoritarAtual()">☆ Favoritar</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleSaveTmpl()">💾 Template</button>
+        </div>
+      </div>
+      <div id="result-box" class="result-box">
+        <div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>Gerar texto</strong>.</div>
+      </div>
+      <!-- Feedback -->
+      <div class="feedback-row" id="feedback-row">
+        <span>Foi útil?</span>
+        <button class="btn-feedback" id="btn-like" onclick="enviarFeedback(true)">👍</button>
+        <button class="btn-feedback" id="btn-dislike" onclick="enviarFeedback(false)">👎</button>
+        <span id="feedback-obg" style="display:none; font-size:.75rem; color:var(--green)">Obrigado pelo feedback!</span>
+      </div>
+    </div>
+
+    {% if recentes %}
+    <div class="card">
+      <div class="card-title">Gerações anteriores</div>
+      <div class="history-list">
+        {% for g in recentes %}
+        <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+          <div class="history-item-meta">
+            <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+            <span class="history-item-date">{{ g.created_at.strftime('%d/%m') }}</span>
+          </div>
+          <div class="history-item-preview">{{ g.resultado_preview }}</div>
+          <div class="history-item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)">{{ '★' if g.is_favorite else '☆' }}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</div>
+
+<script>
+const TOOL_KEYS = ['cobranca_lembrete1','cobranca_lembrete2','cobranca_parcelamento','cobranca_reajuste'];
+const PROFILE = {
+  nome:        {{ (user.profile_nome or user.name or '') | tojson }},
+  escritorio:  {{ (user.profile_escritorio or '') | tojson }},
+};
+const TEMPLATES_DATA = {{ templates_json | safe }};
+
+let activeTab = 0;
+let currentGenId = null;
+
+// ── Inicializar templates no select ──
+(function initTemplates() {
+  const sel = document.getElementById('template-select');
+  TEMPLATES_DATA.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.nome;
+    opt.dataset.tool = t.tool;
+    opt.dataset.campos = JSON.stringify(t.campos);
+    sel.appendChild(opt);
+  });
+  if (TEMPLATES_DATA.length === 0) {
+    document.getElementById('template-bar').style.opacity = '.5';
+  }
+})();
+
+// ── Pré-preencher perfil ──
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[id$="-contador"]').forEach(el => {
+    if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
+  });
+  document.querySelectorAll('[id$="-escritorio"]').forEach(el => {
+    if (!el.value && PROFILE.escritorio) el.value = PROFILE.escritorio;
+  });
+});
+
+// ── Tabs ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = parseInt(btn.dataset.tab);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + t).classList.add('active');
+    activeTab = t;
+    resetResult();
+    // Pré-preencher perfil na aba ativada
+    const tabEl = document.getElementById('tab-' + t);
+    tabEl.querySelectorAll('[id$="-contador"]').forEach(el => { if (!el.value && PROFILE.nome) el.value = PROFILE.nome; });
+    tabEl.querySelectorAll('[id$="-escritorio"]').forEach(el => { if (!el.value && PROFILE.escritorio) el.value = PROFILE.escritorio; });
+  });
+});
+
+function resetResult() {
+  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>Gerar texto</strong>.</div>';
+  document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('feedback-row').style.display = 'none';
+  document.getElementById('save-tmpl-form').style.display = 'none';
+  currentGenId = null;
+}
+
+// ── Carregar template ──
+function loadTemplate(id) {
+  const delBtn = document.getElementById('btn-del-tmpl');
+  if (!id) { delBtn.style.display = 'none'; return; }
+  const opt = document.querySelector(`#template-select option[value="${id}"]`);
+  if (!opt) return;
+  const campos = JSON.parse(opt.dataset.campos || '{}');
+  // Encontrar a aba correspondente ao tool do template
+  const toolKey = opt.dataset.tool || '';
+  const tabIdx = TOOL_KEYS.indexOf(toolKey);
+  if (tabIdx >= 0 && tabIdx !== activeTab) {
+    document.querySelectorAll('.tab-btn')[tabIdx].click();
+  }
+  // Preencher campos
+  Object.entries(campos).forEach(([key, value]) => {
+    const el = document.getElementById('t' + activeTab + '-' + key);
+    if (el) el.value = value;
+  });
+  delBtn.style.display = 'inline-flex';
+  toast('Template carregado');
+}
+
+async function deleteTemplate() {
+  const sel = document.getElementById('template-select');
+  const id = sel.value;
+  if (!id || !confirm('Remover este template?')) return;
+  const data = await api(`/api/templates/${id}`, null, 'DELETE');
+  if (data.ok) {
+    sel.querySelector(`option[value="${id}"]`).remove();
+    sel.value = '';
+    document.getElementById('btn-del-tmpl').style.display = 'none';
+    toast('Template removido');
+    if (sel.options.length <= 1) document.getElementById('template-bar').style.opacity = '.5';
+  }
+}
+
+// ── Campos do formulário ──
+function getCampos() {
+  const p = 't' + activeTab + '-';
+  const campos = {};
+  document.querySelectorAll('#tab-' + activeTab + ' .form-control').forEach(el => {
+    campos[el.id.replace(p, '')] = el.value.trim();
+  });
+  return campos;
+}
+
+// ── Gerar ──
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  const box = document.getElementById('result-box');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Gerando…';
+  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando texto…</div>';
+  document.getElementById('feedback-row').style.display = 'none';
+
+  try {
+    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
+    if (data.resultado) {
+      box.textContent = data.resultado;
+      currentGenId = data.id || null;
+      document.getElementById('result-actions').style.display = 'flex';
+      document.getElementById('feedback-row').style.display = 'flex';
+      resetFeedbackUI();
+    } else {
+      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar. Tente novamente.'}</div>`;
+    }
+  } catch {
+    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão. Tente novamente.</div>';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Gerar texto';
+  }
+}
+
+function copiarResultado() {
+  const txt = document.getElementById('result-box').textContent;
+  if (txt) copyText(txt);
+}
+
+async function favoritarAtual() {
+  if (!currentGenId) return;
+  const btn = document.getElementById('btn-fav');
+  const data = await api(`/api/favoritar/${currentGenId}`);
+  if (data.ok) {
+    btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar';
+    toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+  }
+}
+
+// ── Template save ──
+function toggleSaveTmpl() {
+  const f = document.getElementById('save-tmpl-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') document.getElementById('tmpl-nome').focus();
+}
+
+async function salvarTemplate() {
+  const nome = document.getElementById('tmpl-nome').value.trim();
+  if (!nome) { toast('Digite um nome para o template', 'error'); return; }
+  const data = await api('/api/templates', {
+    tool: TOOL_KEYS[activeTab],
+    nome,
+    campos: getCampos(),
+  });
+  if (data.ok) {
+    const sel = document.getElementById('template-select');
+    const opt = document.createElement('option');
+    opt.value = data.id;
+    opt.textContent = data.nome;
+    opt.dataset.tool = TOOL_KEYS[activeTab];
+    opt.dataset.campos = JSON.stringify(getCampos());
+    sel.appendChild(opt);
+    document.getElementById('save-tmpl-form').style.display = 'none';
+    document.getElementById('tmpl-nome').value = '';
+    document.getElementById('template-bar').style.opacity = '1';
+    toast('Template salvo!');
+  } else {
+    toast(data.error || 'Erro ao salvar template', 'error');
+  }
+}
+
+// ── Feedback ──
+function resetFeedbackUI() {
+  document.getElementById('btn-like').className = 'btn-feedback';
+  document.getElementById('btn-dislike').className = 'btn-feedback';
+  document.getElementById('feedback-obg').style.display = 'none';
+}
+
+async function enviarFeedback(value) {
+  if (!currentGenId) return;
+  const data = await api(`/api/feedback/${currentGenId}`, { value });
+  if (data.ok) {
+    document.getElementById('btn-like').className = 'btn-feedback' + (value ? ' selected-pos' : '');
+    document.getElementById('btn-dislike').className = 'btn-feedback' + (!value ? ' selected-neg' : '');
+    document.getElementById('feedback-obg').style.display = 'inline';
+  }
+}
+</script>
+{% endblock %}

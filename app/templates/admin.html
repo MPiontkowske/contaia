@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Admin — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">⚙️ Painel Administrativo</div>
+  <div class="page-subtitle">Gestão de usuários e visão geral da operação.</div>
+</div>
+
+<div class="page-body">
+
+  <!-- Stats -->
+  <div class="stats-row" style="margin-bottom:28px">
+    <div class="stat-card">
+      <div class="stat-value">{{ users | length }}</div>
+      <div class="stat-label">Total de usuários</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)">{{ active }}</div>
+      <div class="stat-label">Assinantes ativos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--gold)">{{ trial }}</div>
+      <div class="stat-label">Em trial</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--text-dim)">{{ cancelled }}</div>
+      <div class="stat-label">Cancelados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ total_geracoes }}</div>
+      <div class="stat-label">Textos gerados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--green)">
+        R$ {{ "{:,.0f}".format(active * 97).replace(',', '.') }}
+      </div>
+      <div class="stat-label">MRR estimado</div>
+    </div>
+  </div>
+
+  <!-- Tabela de usuários -->
+  <div class="card">
+    <div class="card-title">Usuários</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Plano</th>
+            <th>Gerações</th>
+            <th>Cadastro</th>
+            <th>Último acesso</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr id="user-row-{{ u.id }}">
+            <td>
+              {{ u.name }}
+              {% if u.is_admin %}<span class="badge badge-admin" style="margin-left:6px">admin</span>{% endif %}
+            </td>
+            <td style="color:var(--text-dim); font-size:.82rem">{{ u.email }}</td>
+            <td>
+              <span class="badge badge-{{ u.plan }}" id="badge-{{ u.id }}">{{ u.plan_label }}</span>
+              {% if u.plan == 'trial' %}
+              <span style="font-size:.72rem; color:var(--text-faint); margin-left:4px">{{ u.trial_days_remaining }}d</span>
+              {% endif %}
+            </td>
+            <td style="color:var(--text-dim)">{{ u.generations.count() }}</td>
+            <td style="color:var(--text-faint); font-size:.8rem">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+            <td style="color:var(--text-faint); font-size:.8rem">
+              {{ u.last_login_at.strftime('%d/%m/%Y') if u.last_login_at else '—' }}
+            </td>
+            <td>
+              {% if not u.is_admin %}
+              <button class="btn btn-outline btn-sm" id="btn-plan-{{ u.id }}" onclick="togglePlan({{ u.id }}, this)">
+                {{ 'Cancelar' if u.plan == 'active' else 'Ativar' }}
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function togglePlan(uid, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  const data = await api(`/admin/toggle-plan/${uid}`);
+  if (data.ok) {
+    const badge = document.getElementById('badge-' + uid);
+    const labels = { active: 'Ativo', cancelled: 'Cancelado', trial: 'Trial' };
+    const badgeClass = { active: 'badge-active', cancelled: 'badge-cancelled', trial: 'badge-trial' };
+    badge.textContent = labels[data.plan] || data.plan;
+    badge.className = 'badge ' + (badgeClass[data.plan] || '');
+    btn.textContent = data.plan === 'active' ? 'Cancelar' : 'Ativar';
+    toast(`Plano atualizado: ${labels[data.plan]}`);
+  } else {
+    toast(data.error || 'Erro ao atualizar plano', 'error');
+  }
+  btn.disabled = false;
+}
+</script>
+{% endblock %}

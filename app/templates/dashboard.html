@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Olá, {{ user.first_name }} 👋</div>
+  <div class="page-subtitle">Selecione uma ferramenta ou continue de onde parou.</div>
+</div>
+
+<div class="page-body">
+
+  {% if user.plan == 'trial' %}
+  <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span>⏳ Seu período de teste encerra em <strong>{{ user.trial_days_remaining }} dia(s)</strong>.</span>
+    <a href="/sem-acesso" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Ver planos</a>
+  </div>
+  {% elif not user.has_access %}
+  <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span>🔒 Seu acesso expirou. Assine para continuar usando as ferramentas.</span>
+    <a href="/sem-acesso" class="btn btn-primary btn-sm">Assinar agora</a>
+  </div>
+  {% endif %}
+
+  <!-- Stats -->
+  <div class="stats-row" style="margin-bottom:28px">
+    <div class="stat-card">
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-label">Textos gerados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ favoritos }}</div>
+      <div class="stat-label">Favoritos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">3</div>
+      <div class="stat-label">Ferramentas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="font-size:1rem; color:
+        {% if user.plan == 'active' %}var(--green)
+        {% elif user.plan == 'trial' %}var(--gold)
+        {% else %}var(--red){% endif %}">
+        {{ user.plan_label }}
+      </div>
+      <div class="stat-label">Plano atual</div>
+    </div>
+  </div>
+
+  <!-- Ferramentas -->
+  <div style="margin-bottom:10px; font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint)">Ferramentas</div>
+  <div class="tool-grid" style="margin-bottom:32px">
+    <a href="/ferramenta/cobranca" class="tool-card">
+      <div class="tool-card-icon">💼</div>
+      <div class="tool-card-name">Cobranças</div>
+      <div class="tool-card-desc">Lembretes, propostas de parcelamento e comunicados de reajuste sem constrangimento.</div>
+      <div class="tool-card-tags">
+        <span class="tag">1º Lembrete</span>
+        <span class="tag">2º Lembrete</span>
+        <span class="tag">Parcelamento</span>
+        <span class="tag">Reajuste</span>
+      </div>
+    </a>
+    <a href="/ferramenta/relatorio" class="tool-card">
+      <div class="tool-card-icon">📊</div>
+      <div class="tool-card-name">Relatórios</div>
+      <div class="tool-card-desc">Relatórios gerenciais em linguagem simples que o cliente entende e valoriza.</div>
+      <div class="tool-card-tags">
+        <span class="tag">Mensal</span>
+        <span class="tag">DRE</span>
+        <span class="tag">Comparativo</span>
+        <span class="tag">Anual</span>
+      </div>
+    </a>
+    <a href="/ferramenta/receita" class="tool-card">
+      <div class="tool-card-icon">🏛️</div>
+      <div class="tool-card-name">Receita Federal</div>
+      <div class="tool-card-desc">Respostas a intimações, defesas e comunicações fiscais com linguagem técnica.</div>
+      <div class="tool-card-tags">
+        <span class="tag">Intimação</span>
+        <span class="tag">Defesa</span>
+        <span class="tag">Parcelamento</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- Gerações recentes -->
+  {% if recentes %}
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+    <div style="font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint)">Geradas recentemente</div>
+    <a href="/historico" style="font-size:.78rem; color:var(--gold)">Ver histórico completo →</a>
+  </div>
+  <div class="history-list">
+    {% for g in recentes %}
+    <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+      <div class="history-item-meta">
+        <div style="display:flex; align-items:center; gap:8px">
+          <span class="badge badge-{{ g.category }}">{{ g.tool_label }}</span>
+          <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+        </div>
+        <span class="history-item-date">{{ g.created_at.strftime('%d/%m %H:%M') }}</span>
+      </div>
+      <div class="history-item-preview">{{ g.resultado_preview }}</div>
+      <div class="history-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)" title="{{ 'Remover favorito' if g.is_favorite else 'Favoritar' }}">
+          {{ '★' if g.is_favorite else '☆' }}
+        </button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align:center; padding:40px 20px">
+    <div style="font-size:2rem; margin-bottom:12px">✦</div>
+    <div style="font-weight:600; margin-bottom:6px">Nenhuma geração ainda</div>
+    <div style="font-size:.85rem; color:var(--text-dim); margin-bottom:20px">Escolha uma ferramenta acima para gerar seu primeiro texto com IA.</div>
+    <a href="/ferramenta/cobranca" class="btn btn-primary" style="display:inline-flex; width:auto">Começar com Cobranças</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

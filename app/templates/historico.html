@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Histórico — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">📋 Histórico de Gerações</div>
+  <div class="page-subtitle">Todos os textos gerados pela sua conta.</div>
+</div>
+
+<div class="page-body">
+
+  <!-- Filtros -->
+  <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap">
+    <a href="/historico" class="btn {% if not categoria %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Todos</a>
+    <a href="/historico?categoria=cobranca" class="btn {% if categoria == 'cobranca' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">💼 Cobranças</a>
+    <a href="/historico?categoria=relatorio" class="btn {% if categoria == 'relatorio' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📊 Relatórios</a>
+    <a href="/historico?categoria=receita" class="btn {% if categoria == 'receita' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">🏛️ Receita Federal</a>
+  </div>
+
+  {% if paginacao.items %}
+  <div class="history-list">
+    {% for g in paginacao.items %}
+    <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+      <div class="history-item-meta">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+          <span class="badge badge-{{ g.category }}">{{ g.tool_label }}</span>
+          <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+        </div>
+        <span class="history-item-date">{{ g.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+      </div>
+      <div class="history-item-preview">{{ g.resultado_preview }}</div>
+      <div class="history-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="expandir(this, {{ g.resultado | tojson }})">↓ Ver completo</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)" title="{{ 'Remover favorito' if g.is_favorite else 'Favoritar' }}">
+          {{ '★' if g.is_favorite else '☆' }}
+        </button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕ Remover</button>
+      </div>
+      <div class="history-full" id="full-{{ g.id }}" style="display:none; margin-top:10px; white-space:pre-wrap; font-size:.85rem; color:var(--text); background:var(--surface-3); border-radius:6px; padding:14px; line-height:1.65; border:1px solid var(--border)">{{ g.resultado }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Paginação -->
+  {% if paginacao.pages > 1 %}
+  <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:24px">
+    {% if paginacao.has_prev %}
+    <a href="?{{ 'categoria=' + categoria + '&' if categoria else '' }}page={{ paginacao.prev_num }}" class="btn btn-outline btn-sm">← Anterior</a>
+    {% endif %}
+    <span style="font-size:.82rem; color:var(--text-dim)">Página {{ paginacao.page }} de {{ paginacao.pages }}</span>
+    {% if paginacao.has_next %}
+    <a href="?{{ 'categoria=' + categoria + '&' if categoria else '' }}page={{ paginacao.next_num }}" class="btn btn-outline btn-sm">Próxima →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card" style="text-align:center; padding:60px 20px">
+    <div style="font-size:2rem; margin-bottom:12px">📭</div>
+    <div style="font-weight:600; margin-bottom:6px">Nenhuma geração encontrada</div>
+    <div style="font-size:.85rem; color:var(--text-dim); margin-bottom:20px">
+      {% if categoria %}
+      Sem gerações nesta categoria ainda.
+      {% else %}
+      Você ainda não gerou nenhum texto. Use uma das ferramentas para começar.
+      {% endif %}
+    </div>
+    <a href="/dashboard" class="btn btn-primary" style="display:inline-flex; width:auto">Ir para o Dashboard</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function expandir(btn, texto) {
+  const id = btn.closest('.history-item').id.replace('gen-', '');
+  const el = document.getElementById('full-' + id);
+  const visivel = el.style.display !== 'none';
+  el.style.display = visivel ? 'none' : 'block';
+  btn.textContent = visivel ? '↓ Ver completo' : '↑ Recolher';
+}
+</script>
+{% endblock %}

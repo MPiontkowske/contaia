@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Admin — ContaIA{% endblock %}
+{% block body %}
+<div class="page-wide">
+  <div style="margin-bottom:28px">
+    <h1 style="font-size:20px;font-weight:700">Painel Admin</h1>
+  </div>
+
+  <div class="stat-grid" style="margin-bottom:32px">
+    <div class="stat"><div class="stat-val">{{ users|length }}</div><div class="stat-label">Total usuários</div></div>
+    <div class="stat"><div class="stat-val">{{ active }}</div><div class="stat-label">Assinantes ativos</div></div>
+    <div class="stat"><div class="stat-val">{{ trial }}</div><div class="stat-label">Em trial</div></div>
+    <div class="stat"><div class="stat-val">{{ total_uses }}</div><div class="stat-label">Textos gerados</div></div>
+    <div class="stat"><div class="stat-val">R$ {{ (active * 97)|int }}</div><div class="stat-label">MRR estimado</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Usuários</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Nome</th>
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">E-mail</th>
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Plano</th>
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Usos</th>
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Cadastro</th>
+          <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr style="border-bottom:1px solid var(--border)" id="row-{{ u.id }}">
+          <td style="padding:12px">{{ u.name }}{% if u.is_admin %} <span style="font-size:10px;color:var(--gold)">(admin)</span>{% endif %}</td>
+          <td style="padding:12px;color:var(--muted)">{{ u.email }}</td>
+          <td style="padding:12px">
+            <span class="badge badge-{{ u.plan }}" id="badge-{{ u.id }}">{{ u.plan }}</span>
+          </td>
+          <td style="padding:12px;color:var(--muted)">{{ u.usages|length }}</td>
+          <td style="padding:12px;color:var(--muted)">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+          <td style="padding:12px">
+            {% if not u.is_admin %}
+            <button class="btn btn-outline btn-sm" onclick="togglePlan({{ u.id }}, this)">
+              {{ 'Desativar' if u.plan == 'active' else 'Ativar' }}
+            </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function togglePlan(uid, btn) {
+  btn.disabled = true;
+  const r = await fetch('/admin/toggle-plan/'+uid, {method:'POST'});
+  const d = await r.json();
+  if(d.ok) {
+    const badge = document.getElementById('badge-'+uid);
+    badge.className = 'badge badge-' + d.plan;
+    badge.textContent = d.plan;
+    btn.textContent = d.plan === 'active' ? 'Desativar' : 'Ativar';
+  }
+  btn.disabled = false;
+}
+</script>
+{% endblock %}

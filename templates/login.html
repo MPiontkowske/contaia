@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ContaIA — Entrar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d0d;--surface:#161616;--surface2:#1e1e1e;--border:#2a2a2a;--gold:#d4a843;--rust:#c0392b;--text:#e8e8e8;--muted:#777;--radius:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:100%;max-width:400px}
+.brand{text-align:center;margin-bottom:40px}
+.brand-name{font-size:32px;font-weight:700;color:var(--gold);letter-spacing:-1px}
+.brand-name span{color:var(--text)}
+.brand-sub{font-size:13px;color:var(--muted);margin-top:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px}
+.card-title{font-size:18px;font-weight:600;margin-bottom:24px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:.15s}
+input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
+.btn{width:100%;padding:12px;background:var(--gold);color:#000;border:none;border-radius:var(--radius);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{background:#e6ba50}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.alert{padding:12px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c}
+.alert.show{display:block}
+.footer-link{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.footer-link a{color:var(--gold);text-decoration:none}
+.spinner{width:15px;height:15px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">Conta<span>IA</span></div>
+    <div class="brand-sub">Assistente de IA para contadores brasileiros</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Entrar na sua conta</div>
+    <div class="alert" id="alert"></div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="email" placeholder="seu@email.com.br" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn" id="btn" onclick="doLogin()">
+      <div class="spinner" id="spin"></div>
+      <span id="btn-text">Entrar</span>
+    </button>
+    <div class="footer-link">
+      Não tem conta? <a href="/register">Criar conta grátis</a>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pwd=document.getElementById('password').value;
+  const alert=document.getElementById('alert');
+  const btn=document.getElementById('btn');
+  const spin=document.getElementById('spin');
+  const txt=document.getElementById('btn-text');
+  if(!email||!pwd){showAlert('Preencha e-mail e senha.');return}
+  btn.disabled=true;spin.classList.add('show');txt.textContent='Entrando...';
+  alert.classList.remove('show');
+  try{
+    const r=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const d=await r.json();
+    if(d.ok){window.location.href=d.admin?'/admin':'/dashboard'}
+    else{showAlert(d.error||'Erro ao entrar.')}
+  }catch(e){showAlert('Erro de conexão.')}
+  btn.disabled=false;spin.classList.remove('show');txt.textContent='Entrar';
+}
+function showAlert(msg){const a=document.getElementById('alert');a.textContent=msg;a.classList.add('show')}
+</script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Relatórios — ContaIA{% endblock %}
+
+{% block extra_head %}
+<style>
+.template-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; }
+.template-bar select { flex:1; background:transparent; border:none; color:var(--text-dim); font-size:.82rem; outline:none; cursor:pointer; }
+.template-bar select option { background:var(--surface-2); }
+.save-tmpl-form { display:none; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-top:10px; }
+.save-tmpl-form .inner { display:flex; gap:8px; }
+.feedback-row { display:none; align-items:center; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.feedback-row span { font-size:.78rem; color:var(--text-faint); }
+.btn-feedback { background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:.9rem; color:var(--text-dim); transition:background .15s, border-color .15s; }
+.btn-feedback:hover { background:var(--surface-3); border-color:var(--border-2); }
+.btn-feedback.selected-pos { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+.btn-feedback.selected-neg { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">📊 Relatórios Gerenciais</div>
+  <div class="page-subtitle">Traduza números em linguagem que o cliente entende e valoriza.</div>
+</div>
+
+<div class="page-body">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start">
+
+  <!-- Coluna esquerda: formulário -->
+  <div>
+    <div class="card">
+
+      <!-- Seletor de templates -->
+      <div class="template-bar" id="template-bar">
+        <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
+        <select id="template-select" onchange="loadTemplate(this.value)">
+          <option value="">— Formulário em branco —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="btn-del-tmpl" onclick="deleteTemplate()" style="display:none" title="Remover template">✕</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="0">Mensal</button>
+        <button class="tab-btn" data-tab="1">DRE</button>
+        <button class="tab-btn" data-tab="2">Comparativo</button>
+        <button class="tab-btn" data-tab="3">Anual</button>
+      </div>
+
+      <!-- Tab 0: Mensal -->
+      <div class="tab-pane active" id="tab-0">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t0-empresa" placeholder="Ex: Padaria do João"></div>
+          <div class="form-group"><label class="form-label">Mês / Ano</label><input class="form-control" id="t0-mes_ano" placeholder="Ex: Janeiro/2025"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Faturamento (R$)</label><input class="form-control" id="t0-faturamento" placeholder="Ex: 45.000"></div>
+          <div class="form-group"><label class="form-label">Despesas (R$)</label><input class="form-control" id="t0-despesas" placeholder="Ex: 32.000"></div>
+          <div class="form-group"><label class="form-label">Lucro líquido (R$)</label><input class="form-control" id="t0-lucro" placeholder="Ex: 13.000"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Observações adicionais</label><textarea class="form-control" id="t0-observacoes" placeholder="Ex: custos extras de manutenção, crescimento em delivery…" rows="3"></textarea></div>
+      </div>
+
+      <!-- Tab 1: DRE -->
+      <div class="tab-pane" id="tab-1">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t1-empresa" placeholder="Ex: Padaria do João"></div>
+          <div class="form-group"><label class="form-label">Período</label><input class="form-control" id="t1-periodo" placeholder="Ex: Jan–Dez/2024"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Dados do DRE</label><textarea class="form-control" id="t1-dre" placeholder="Cole as linhas do DRE: Receita Bruta, Deduções, Lucro Bruto, Despesas, EBITDA, Lucro Líquido…" rows="7"></textarea></div>
+      </div>
+
+      <!-- Tab 2: Comparativo -->
+      <div class="tab-pane" id="tab-2">
+        <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t2-empresa" placeholder="Ex: Padaria do João"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Dados do mês anterior</label><textarea class="form-control" id="t2-mes_anterior" placeholder="Ex: Dez/2024 — Fat: R$42.000, Desp: R$30.000" rows="5"></textarea></div>
+          <div class="form-group"><label class="form-label">Dados do mês atual</label><textarea class="form-control" id="t2-mes_atual" placeholder="Ex: Jan/2025 — Fat: R$45.000, Desp: R$31.500" rows="5"></textarea></div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Anual -->
+      <div class="tab-pane" id="tab-3">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t3-empresa" placeholder="Ex: Padaria do João"></div>
+          <div class="form-group"><label class="form-label">Ano</label><input class="form-control" id="t3-ano" placeholder="Ex: 2024"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Dados do ano</label><textarea class="form-control" id="t3-dados" placeholder="Cole os dados anuais: faturamento por mês, principais despesas, resultado final…" rows="7"></textarea></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
+        <span id="btn-text">Gerar relatório</span>
+        <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
+      </button>
+
+      <div class="save-tmpl-form" id="save-tmpl-form">
+        <div style="font-size:.75rem; color:var(--text-faint); margin-bottom:6px">Salvar campos atuais como template:</div>
+        <div class="inner">
+          <input class="form-control" id="tmpl-nome" placeholder="Ex: Relatório mensal — Padaria do João" style="font-size:.83rem">
+          <button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-tmpl-form').style.display='none'">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna direita: resultado + histórico -->
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Resultado</div>
+        <div id="result-actions" class="result-actions" style="display:none; margin-top:0">
+          <button class="btn btn-outline btn-sm" onclick="copiarResultado()">⎘ Copiar</button>
+          <button class="btn btn-outline btn-sm" id="btn-fav" onclick="favoritarAtual()">☆ Favoritar</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleSaveTmpl()">💾 Template</button>
+        </div>
+      </div>
+      <div id="result-box" class="result-box">
+        <div class="result-placeholder">O relatório gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar relatório</strong>.</div>
+      </div>
+      <div class="feedback-row" id="feedback-row">
+        <span>Foi útil?</span>
+        <button class="btn-feedback" id="btn-like" onclick="enviarFeedback(true)">👍</button>
+        <button class="btn-feedback" id="btn-dislike" onclick="enviarFeedback(false)">👎</button>
+        <span id="feedback-obg" style="display:none; font-size:.75rem; color:var(--green)">Obrigado pelo feedback!</span>
+      </div>
+    </div>
+
+    {% if recentes %}
+    <div class="card">
+      <div class="card-title">Relatórios anteriores</div>
+      <div class="history-list">
+        {% for g in recentes %}
+        <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+          <div class="history-item-meta">
+            <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+            <span class="history-item-date">{{ g.created_at.strftime('%d/%m') }}</span>
+          </div>
+          <div class="history-item-preview">{{ g.resultado_preview }}</div>
+          <div class="history-item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)">{{ '★' if g.is_favorite else '☆' }}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</div>
+
+<script>
+const TOOL_KEYS = ['relatorio_mensal','relatorio_dre','relatorio_comparativo','relatorio_anual'];
+const PROFILE = {
+  nome:       {{ (user.profile_nome or user.name or '') | tojson }},
+  escritorio: {{ (user.profile_escritorio or '') | tojson }},
+};
+const TEMPLATES_DATA = {{ templates_json | safe }};
+
+let activeTab = 0;
+let currentGenId = null;
+
+(function initTemplates() {
+  const sel = document.getElementById('template-select');
+  TEMPLATES_DATA.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.nome;
+    opt.dataset.tool = t.tool;
+    opt.dataset.campos = JSON.stringify(t.campos);
+    sel.appendChild(opt);
+  });
+  if (TEMPLATES_DATA.length === 0) document.getElementById('template-bar').style.opacity = '.5';
+})();
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = parseInt(btn.dataset.tab);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + t).classList.add('active');
+    activeTab = t;
+    resetResult();
+  });
+});
+
+function resetResult() {
+  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O relatório gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar relatório</strong>.</div>';
+  document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('feedback-row').style.display = 'none';
+  document.getElementById('save-tmpl-form').style.display = 'none';
+  currentGenId = null;
+}
+
+function loadTemplate(id) {
+  const delBtn = document.getElementById('btn-del-tmpl');
+  if (!id) { delBtn.style.display = 'none'; return; }
+  const opt = document.querySelector(`#template-select option[value="${id}"]`);
+  if (!opt) return;
+  const campos = JSON.parse(opt.dataset.campos || '{}');
+  const toolKey = opt.dataset.tool || '';
+  const tabIdx = TOOL_KEYS.indexOf(toolKey);
+  if (tabIdx >= 0 && tabIdx !== activeTab) document.querySelectorAll('.tab-btn')[tabIdx].click();
+  Object.entries(campos).forEach(([key, value]) => {
+    const el = document.getElementById('t' + activeTab + '-' + key);
+    if (el) el.value = value;
+  });
+  delBtn.style.display = 'inline-flex';
+  toast('Template carregado');
+}
+
+async function deleteTemplate() {
+  const sel = document.getElementById('template-select');
+  const id = sel.value;
+  if (!id || !confirm('Remover este template?')) return;
+  const data = await api(`/api/templates/${id}`, null, 'DELETE');
+  if (data.ok) {
+    sel.querySelector(`option[value="${id}"]`).remove();
+    sel.value = '';
+    document.getElementById('btn-del-tmpl').style.display = 'none';
+    toast('Template removido');
+    if (sel.options.length <= 1) document.getElementById('template-bar').style.opacity = '.5';
+  }
+}
+
+function getCampos() {
+  const p = 't' + activeTab + '-';
+  const campos = {};
+  document.querySelectorAll('#tab-' + activeTab + ' .form-control').forEach(el => {
+    campos[el.id.replace(p, '')] = el.value.trim();
+  });
+  return campos;
+}
+
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  const box = document.getElementById('result-box');
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Gerando…';
+  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando relatório…</div>';
+  document.getElementById('feedback-row').style.display = 'none';
+  try {
+    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
+    if (data.resultado) {
+      box.textContent = data.resultado;
+      currentGenId = data.id || null;
+      document.getElementById('result-actions').style.display = 'flex';
+      document.getElementById('feedback-row').style.display = 'flex';
+      resetFeedbackUI();
+    } else {
+      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar.'}</div>`;
+    }
+  } catch {
+    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão.</div>';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Gerar relatório';
+  }
+}
+
+function copiarResultado() { const t = document.getElementById('result-box').textContent; if (t) copyText(t); }
+
+async function favoritarAtual() {
+  if (!currentGenId) return;
+  const btn = document.getElementById('btn-fav');
+  const data = await api(`/api/favoritar/${currentGenId}`);
+  if (data.ok) { btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar'; toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos'); }
+}
+
+function toggleSaveTmpl() {
+  const f = document.getElementById('save-tmpl-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') document.getElementById('tmpl-nome').focus();
+}
+
+async function salvarTemplate() {
+  const nome = document.getElementById('tmpl-nome').value.trim();
+  if (!nome) { toast('Digite um nome para o template', 'error'); return; }
+  const data = await api('/api/templates', { tool: TOOL_KEYS[activeTab], nome, campos: getCampos() });
+  if (data.ok) {
+    const sel = document.getElementById('template-select');
+    const opt = document.createElement('option');
+    opt.value = data.id; opt.textContent = data.nome;
+    opt.dataset.tool = TOOL_KEYS[activeTab];
+    opt.dataset.campos = JSON.stringify(getCampos());
+    sel.appendChild(opt);
+    document.getElementById('save-tmpl-form').style.display = 'none';
+    document.getElementById('tmpl-nome').value = '';
+    document.getElementById('template-bar').style.opacity = '1';
+    toast('Template salvo!');
+  } else { toast(data.error || 'Erro ao salvar', 'error'); }
+}
+
+function resetFeedbackUI() {
+  document.getElementById('btn-like').className = 'btn-feedback';
+  document.getElementById('btn-dislike').className = 'btn-feedback';
+  document.getElementById('feedback-obg').style.display = 'none';
+}
+
+async function enviarFeedback(value) {
+  if (!currentGenId) return;
+  const data = await api(`/api/feedback/${currentGenId}`, { value });
+  if (data.ok) {
+    document.getElementById('btn-like').className = 'btn-feedback' + (value ? ' selected-pos' : '');
+    document.getElementById('btn-dislike').className = 'btn-feedback' + (!value ? ' selected-neg' : '');
+    document.getElementById('feedback-obg').style.display = 'inline';
+  }
+}
+</script>
+{% endblock %}

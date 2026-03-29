@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Meu Perfil — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">👤 Meu Perfil</div>
+  <div class="page-subtitle">Dados que pré-preenchem automaticamente os formulários.</div>
+</div>
+
+<div class="page-body">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; max-width:860px">
+
+  <!-- Dados do perfil -->
+  <div class="card">
+    <div class="card-title">Dados do contador</div>
+    <div id="perfil-alert" class="alert" style="display:none"></div>
+
+    <div class="form-group">
+      <label class="form-label">Nome completo</label>
+      <input class="form-control" id="p-name" value="{{ user.name }}" placeholder="Seu nome completo">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail</label>
+      <input class="form-control" value="{{ user.email }}" disabled style="opacity:.5; cursor:not-allowed">
+      <div style="font-size:.72rem; color:var(--text-faint); margin-top:4px">O e-mail não pode ser alterado.</div>
+    </div>
+
+    <hr class="divider" style="margin:18px 0">
+    <div style="font-size:.78rem; font-weight:600; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px">
+      Pré-preenchimento nos formulários
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nome do contador <span style="color:var(--gold)">★</span></label>
+      <input class="form-control" id="p-profile_nome"
+             value="{{ user.profile_nome or '' }}"
+             placeholder="Ex: Carlos Souza — aparece no campo 'Contador'">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Escritório / empresa <span style="color:var(--gold)">★</span></label>
+      <input class="form-control" id="p-profile_escritorio"
+             value="{{ user.profile_escritorio or '' }}"
+             placeholder="Ex: Souza Contabilidade — aparece no campo 'Escritório'">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cargo / função</label>
+      <select class="form-control" id="p-profile_cargo">
+        {% set cargo = user.profile_cargo or '' %}
+        <option value="" {% if not cargo %}selected{% endif %}>Não informado</option>
+        <option value="Contador" {% if cargo == 'Contador' %}selected{% endif %}>Contador(a)</option>
+        <option value="Contadora" {% if cargo == 'Contadora' %}selected{% endif %}>Contadora</option>
+        <option value="Sócio Contador" {% if cargo == 'Sócio Contador' %}selected{% endif %}>Sócio(a) Contador(a)</option>
+        <option value="Técnico Contábil" {% if cargo == 'Técnico Contábil' %}selected{% endif %}>Técnico(a) Contábil</option>
+        <option value="Auxiliar Contábil" {% if cargo == 'Auxiliar Contábil' %}selected{% endif %}>Auxiliar Contábil</option>
+        <option value="Diretor Financeiro" {% if cargo == 'Diretor Financeiro' %}selected{% endif %}>Diretor(a) Financeiro(a)</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" id="btn-salvar-perfil" onclick="salvarPerfil()">
+      <span id="btn-perfil-text">Salvar perfil</span>
+      <div class="spinner" id="btn-perfil-spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
+    </button>
+  </div>
+
+  <!-- Alterar senha -->
+  <div>
+    <div class="card">
+      <div class="card-title">Alterar senha</div>
+      <div id="senha-alert" class="alert" style="display:none"></div>
+
+      <div class="form-group">
+        <label class="form-label">Senha atual</label>
+        <input class="form-control" type="password" id="s-atual" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nova senha</label>
+        <input class="form-control" type="password" id="s-nova" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nova senha</label>
+        <input class="form-control" type="password" id="s-confirmar" placeholder="Repita a nova senha" autocomplete="new-password">
+      </div>
+
+      <button class="btn btn-outline" id="btn-salvar-senha" onclick="alterarSenha()">
+        <span id="btn-senha-text">Alterar senha</span>
+        <div class="spinner" id="btn-senha-spinner" style="display:none"></div>
+      </button>
+    </div>
+
+    <!-- Info sobre pré-preenchimento -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Como funciona</div>
+      <div style="font-size:.83rem; color:var(--text-dim); line-height:1.65">
+        <p>Os campos marcados com <span style="color:var(--gold)">★</span> são usados para pré-preencher automaticamente os formulários de cobranças, relatórios e receita federal.</p>
+        <br>
+        <p>Por exemplo, o campo <strong>Nome do contador</strong> preenche automaticamente o campo "Assinado por" em todos os templates de e-mail de cobrança.</p>
+        <br>
+        <p>Você pode sobrescrever o valor em qualquer geração específica sem alterar o perfil.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function salvarPerfil() {
+  const btn = document.getElementById('btn-salvar-perfil');
+  const spinner = document.getElementById('btn-perfil-spinner');
+  const btnText = document.getElementById('btn-perfil-text');
+  const alertEl = document.getElementById('perfil-alert');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Salvando…';
+  alertEl.style.display = 'none';
+
+  const payload = {
+    name:                document.getElementById('p-name').value.trim(),
+    profile_nome:        document.getElementById('p-profile_nome').value.trim(),
+    profile_escritorio:  document.getElementById('p-profile_escritorio').value.trim(),
+    profile_cargo:       document.getElementById('p-profile_cargo').value,
+  };
+
+  try {
+    const data = await api('/api/perfil', payload);
+    if (data.ok) {
+      showAlert('perfil-alert', 'Perfil salvo com sucesso!', 'success');
+      toast('Perfil atualizado');
+    } else {
+      showAlert('perfil-alert', data.error || 'Erro ao salvar.', 'error');
+    }
+  } catch {
+    showAlert('perfil-alert', 'Erro de conexão.', 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Salvar perfil';
+  }
+}
+
+async function alterarSenha() {
+  const btn = document.getElementById('btn-salvar-senha');
+  const spinner = document.getElementById('btn-senha-spinner');
+  const btnText = document.getElementById('btn-senha-text');
+  const alertEl = document.getElementById('senha-alert');
+
+  const atual    = document.getElementById('s-atual').value;
+  const nova     = document.getElementById('s-nova').value;
+  const confirmar = document.getElementById('s-confirmar').value;
+
+  if (!atual || !nova) { showAlert('senha-alert', 'Preencha todos os campos.', 'error'); return; }
+  if (nova !== confirmar) { showAlert('senha-alert', 'As senhas não coincidem.', 'error'); return; }
+  if (nova.length < 6) { showAlert('senha-alert', 'Nova senha deve ter ao menos 6 caracteres.', 'error'); return; }
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Alterando…';
+  alertEl.style.display = 'none';
+
+  try {
+    const data = await api('/api/alterar-senha', { senha_atual: atual, nova_senha: nova });
+    if (data.ok) {
+      showAlert('senha-alert', 'Senha alterada com sucesso!', 'success');
+      document.getElementById('s-atual').value = '';
+      document.getElementById('s-nova').value = '';
+      document.getElementById('s-confirmar').value = '';
+      toast('Senha alterada');
+    } else {
+      showAlert('senha-alert', data.error || 'Erro ao alterar senha.', 'error');
+    }
+  } catch {
+    showAlert('senha-alert', 'Erro de conexão.', 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Alterar senha';
+  }
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+</script>
+{% endblock %}

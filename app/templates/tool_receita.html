@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Receita Federal — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">🏛️ Receita Federal</div>
+  <div class="page-subtitle">Comunicações fiscais formais com linguagem técnica e objetiva.</div>
+</div>
+
+<div class="page-body">
+
+<div class="notice">
+  ⚠️ <strong>Aviso importante:</strong> Os textos gerados pela IA são <strong>rascunhos de apoio</strong> e devem ser revisados por um contador ou advogado tributarista habilitado antes do envio. A ContaIA auxilia na redação e organização — não substitui a análise jurídica ou tributária profissional.
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start">
+
+  <!-- Coluna esquerda: formulário -->
+  <div>
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="0">Intimação</button>
+        <button class="tab-btn" data-tab="1">Defesa</button>
+        <button class="tab-btn" data-tab="2">Avisar Cliente</button>
+        <button class="tab-btn" data-tab="3">Parcelamento</button>
+      </div>
+
+      <!-- Tab 0: Resposta a Intimação -->
+      <div class="tab-pane active" id="tab-0">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Contribuinte / Razão Social</label><input class="form-control" id="t0-contribuinte" placeholder="Ex: Padaria do João Ltda"></div>
+          <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t0-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Texto da intimação recebida</label><textarea class="form-control" id="t0-intimacao" placeholder="Cole aqui o texto da intimação ou descreva o que foi solicitado pela Receita Federal…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Informações para embasar a resposta</label><textarea class="form-control" id="t0-informacoes" placeholder="Descreva os fatos, documentos disponíveis e argumentos que devem constar na resposta…" rows="4"></textarea></div>
+      </div>
+
+      <!-- Tab 1: Defesa / Impugnação -->
+      <div class="tab-pane" id="tab-1">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Contribuinte / Razão Social</label><input class="form-control" id="t1-contribuinte" placeholder="Ex: Padaria do João Ltda"></div>
+          <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t1-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Descrição do auto de infração</label><textarea class="form-control" id="t1-auto" placeholder="Descreva o auto de infração: tributo, período, valor, fundamento legal citado…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Argumentos e fatos para a defesa</label><textarea class="form-control" id="t1-argumentos" placeholder="Liste os argumentos, fatos e documentos que fundamentam a defesa…" rows="4"></textarea></div>
+      </div>
+
+      <!-- Tab 2: Avisar Cliente -->
+      <div class="tab-pane" id="tab-2">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t2-cliente" placeholder="Ex: João Silva"></div>
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t2-contador" placeholder="Ex: Carlos Souza"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Assunto da notificação fiscal</label><input class="form-control" id="t2-assunto" placeholder="Ex: Intimação sobre divergência no IRPJ 2023"></div>
+        <div class="form-group">
+          <label class="form-label">Nível de gravidade</label>
+          <select class="form-control" id="t2-gravidade">
+            <option value="Rotineira">Rotineira — situação comum, sem urgência</option>
+            <option value="Moderada">Moderada — requer atenção e prazo definido</option>
+            <option value="Grave">Grave — requer ação imediata</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tab 3: Parcelamento Fiscal -->
+      <div class="tab-pane" id="tab-3">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Contribuinte / Razão Social</label><input class="form-control" id="t3-contribuinte" placeholder="Ex: Padaria do João Ltda"></div>
+          <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t3-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Valor total do débito (R$)</label><input class="form-control" id="t3-debito" placeholder="Ex: 18.500,00"></div>
+          <div class="form-group"><label class="form-label">Nº de parcelas</label><input class="form-control" id="t3-parcelas" placeholder="Ex: 60"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Tributo e período de referência</label><input class="form-control" id="t3-tributo" placeholder="Ex: IRPJ / CSLL — 2022 a 2024"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
+        <span id="btn-text">Gerar documento</span>
+        <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Coluna direita: resultado + histórico -->
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Resultado</div>
+        <div class="result-actions" id="result-actions" style="display:none; margin-top:0">
+          <button class="btn btn-outline btn-sm" onclick="copiarResultado()">⎘ Copiar</button>
+          <button class="btn btn-outline btn-sm" id="btn-fav" onclick="favoritarAtual()">☆ Favoritar</button>
+        </div>
+      </div>
+      <div id="result-box" class="result-box">
+        <div class="result-placeholder">O documento gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar documento</strong>.</div>
+      </div>
+      <div id="pos-aviso" style="display:none; margin-top:10px" class="notice">
+        Revise o texto gerado com atenção antes de utilizar. Este rascunho não substitui análise profissional.
+      </div>
+    </div>
+
+    {% if recentes %}
+    <div class="card">
+      <div class="card-title">Documentos anteriores</div>
+      <div class="history-list">
+        {% for g in recentes %}
+        <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+          <div class="history-item-meta">
+            <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+            <span class="history-item-date">{{ g.created_at.strftime('%d/%m') }}</span>
+          </div>
+          <div class="history-item-preview">{{ g.resultado_preview }}</div>
+          <div class="history-item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)">{{ '★' if g.is_favorite else '☆' }}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</div>
+
+<script>
+const TOOLS = ['receita_intimacao','receita_defesa','receita_comunicar_cliente','receita_parcelamento'];
+let activeTab = 0;
+let currentGenId = null;
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = parseInt(btn.dataset.tab);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + t).classList.add('active');
+    activeTab = t;
+    resetResult();
+  });
+});
+
+function resetResult() {
+  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O documento gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar documento</strong>.</div>';
+  document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('pos-aviso').style.display = 'none';
+  currentGenId = null;
+}
+
+function getCampos() {
+  const p = 't' + activeTab + '-';
+  const campos = {};
+  document.querySelectorAll('#tab-' + activeTab + ' .form-control').forEach(el => {
+    campos[el.id.replace(p, '')] = el.value.trim();
+  });
+  return campos;
+}
+
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  const box = document.getElementById('result-box');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Gerando…';
+  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando documento…</div>';
+  document.getElementById('pos-aviso').style.display = 'none';
+
+  try {
+    const data = await api('/api/gerar', { tool: TOOLS[activeTab], campos: getCampos() });
+    if (data.resultado) {
+      box.textContent = data.resultado;
+      currentGenId = data.id || null;
+      document.getElementById('result-actions').style.display = 'flex';
+      document.getElementById('pos-aviso').style.display = 'block';
+    } else {
+      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar. Tente novamente.'}</div>`;
+    }
+  } catch {
+    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão. Tente novamente.</div>';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Gerar documento';
+  }
+}
+
+function copiarResultado() {
+  const txt = document.getElementById('result-box').textContent;
+  if (txt) copyText(txt);
+}
+
+async function favoritarAtual() {
+  if (!currentGenId) return;
+  const btn = document.getElementById('btn-fav');
+  const data = await api(`/api/favoritar/${currentGenId}`);
+  if (data.ok) {
+    btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar';
+    toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+  }
+}
+</script>
+{% endblock %}

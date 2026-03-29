@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Receita Federal — ContaIA{% endblock %}
+{% block body %}
+<div class="page">
+  <div style="margin-bottom:28px">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ferramenta</div>
+    <h1 style="font-size:20px;font-weight:700">🏛️ Receita Federal</h1>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">Comunicação fiscal formal com tom técnico e seguro.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab(0,'receita_intimacao')">Resposta a Intimação</button>
+    <button class="tab" onclick="setTab(1,'receita_defesa')">Defesa / Auto</button>
+    <button class="tab" onclick="setTab(2,'receita_comunicar_cliente')">Avisar Cliente</button>
+    <button class="tab" onclick="setTab(3,'receita_parcelamento')">Parcelamento</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+    <div class="card">
+      <div class="card-title">Dados</div>
+      <div class="alert" id="alert" style="display:none;padding:12px;border-radius:8px;font-size:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c;margin-bottom:16px"></div>
+
+      <div id="form-0">
+        <div class="form-row">
+          <div class="form-group"><label>Contribuinte</label><input id="f0-contribuinte" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>CNPJ</label><input id="f0-cnpj" placeholder="00.000.000/0001-00"></div>
+        </div>
+        <div class="form-group"><label>Texto da intimação</label><textarea id="f0-intimacao" rows="4" placeholder="Cole aqui o texto da intimação recebida..."></textarea></div>
+        <div class="form-group"><label>Informações para a resposta</label><textarea id="f0-informacoes" rows="4" placeholder="Descreva os fatos, documentos disponíveis e esclarecimentos que deseja apresentar..."></textarea></div>
+      </div>
+
+      <div id="form-1" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Contribuinte</label><input id="f1-contribuinte" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>CNPJ</label><input id="f1-cnpj" placeholder="00.000.000/0001-00"></div>
+        </div>
+        <div class="form-group"><label>Descrição do auto de infração</label><textarea id="f1-auto" rows="3" placeholder="Descreva o auto: número, tributo, período, valor autuado..."></textarea></div>
+        <div class="form-group"><label>Argumentos de defesa</label><textarea id="f1-argumentos" rows="4" placeholder="Liste os fatos e fundamentos que embasam a defesa..."></textarea></div>
+      </div>
+
+      <div id="form-2" style="display:none">
+        <div class="form-group"><label>Nome do cliente</label><input id="f2-cliente" placeholder="João da Silva"></div>
+        <div class="form-group"><label>Assunto da notificação</label><input id="f2-assunto" placeholder="Ex: inconsistência na DCTF de março/2025"></div>
+        <div class="form-group">
+          <label>Gravidade da situação</label>
+          <select id="f2-gravidade">
+            <option value="rotineira">Rotineira — sem urgência</option>
+            <option value="moderada">Moderada — requer atenção</option>
+            <option value="grave">Grave — ação imediata necessária</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Seu nome (contador)</label><input id="f2-contador" placeholder="Dra. Ana Lima"></div>
+      </div>
+
+      <div id="form-3" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Contribuinte</label><input id="f3-contribuinte" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>CNPJ</label><input id="f3-cnpj" placeholder="00.000.000/0001-00"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor do débito (R$)</label><input id="f3-debito" placeholder="24.500,00"></div>
+          <div class="form-group"><label>Tributo / Período</label><input id="f3-tributo" placeholder="IRPJ — 2023"></div>
+        </div>
+        <div class="form-group"><label>Número de parcelas</label><input id="f3-parcelas" placeholder="60"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()" style="margin-top:8px">
+        <div class="spinner" id="spin"></div>
+        <span id="btn-txt">Gerar documento com IA</span>
+      </button>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Resultado</div>
+        <div id="placeholder" style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Preencha os dados e clique em gerar.</div>
+        <div class="result-box" id="result">
+          <button class="result-copy" onclick="copyResult()">Copiar</button>
+          <div id="result-text"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;border-color:rgba(212,168,67,.2)">
+        <div style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Aviso importante</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7">Os textos gerados são ponto de partida e devem ser revisados por um profissional antes do envio. A ContaIA não substitui a responsabilidade técnica do contador.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentTab=0, currentTool='receita_intimacao';
+function setTab(n,tool){
+  currentTab=n; currentTool=tool;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<4;i++) document.getElementById('form-'+i).style.display=i===n?'block':'none';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('placeholder').style.display='block';
+}
+function getCampos(){
+  const p='f'+currentTab+'-', campos={};
+  document.querySelectorAll('[id^="'+p+'"]').forEach(el=>{ campos[el.id.replace(p,'')]=el.value.trim(); });
+  return campos;
+}
+async function gerar(){
+  const btn=document.getElementById('btn-gerar'), spin=document.getElementById('spin'), txt=document.getElementById('btn-txt'), alert=document.getElementById('alert');
+  alert.style.display='none'; btn.disabled=true; spin.classList.add('show'); txt.textContent='Gerando...';
+  try{
+    const r=await fetch('/api/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:currentTool,campos:getCampos()})});
+    const d=await r.json();
+    if(d.resultado){
+      document.getElementById('result-text').textContent=d.resultado;
+      document.getElementById('result').classList.add('show');
+      document.getElementById('placeholder').style.display='none';
+    } else { alert.textContent=d.error||'Erro ao gerar.'; alert.style.display='block'; }
+  } catch(e){ alert.textContent='Erro de conexão.'; alert.style.display='block'; }
+  btn.disabled=false; spin.classList.remove('show'); txt.textContent='Gerar documento com IA';
+}
+function copyResult(){
+  navigator.clipboard.writeText(document.getElementById('result-text').textContent);
+  const btn=document.querySelector('.result-copy'); btn.textContent='Copiado!'; setTimeout(()=>btn.textContent='Copiar',2000);
+}
+</script>
+{% endblock %}

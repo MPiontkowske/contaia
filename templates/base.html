@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}ContaIA{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0d0d0d;
+  --surface:  #161616;
+  --surface2: #1e1e1e;
+  --border:   #2a2a2a;
+  --gold:     #d4a843;
+  --gold-dim: #a07c2e;
+  --rust:     #c0392b;
+  --text:     #e8e8e8;
+  --muted:    #777;
+  --success:  #27ae60;
+  --radius:   8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.nav-brand{font-weight:700;font-size:18px;color:var(--gold);letter-spacing:-0.5px}
+.nav-brand span{color:var(--text)}
+.nav-links{display:flex;gap:8px;align-items:center}
+.nav-link{padding:6px 14px;border-radius:var(--radius);color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:.15s}
+.nav-link:hover{color:var(--text);background:var(--surface2)}
+.nav-link.active{color:var(--gold)}
+.nav-user{font-size:12px;color:var(--muted);padding:0 8px}
+.btn-logout{padding:6px 14px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:none;transition:.15s}
+.btn-logout:hover{border-color:var(--rust);color:var(--rust)}
+
+/* LAYOUT */
+.page{max-width:960px;margin:0 auto;padding:40px 24px}
+.page-wide{max-width:1200px;margin:0 auto;padding:40px 24px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+
+/* FORMS */
+.form-group{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;letter-spacing:.04em}
+input,textarea,select{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;transition:.15s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
+textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;border:none;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{background:#e6ba50}
+.btn-primary:disabled{background:var(--gold-dim);cursor:not-allowed;opacity:.6}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-full{width:100%}
+.btn-sm{padding:6px 14px;font-size:12px}
+
+/* RESULT */
+.result-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.8;white-space:pre-wrap;display:none;position:relative}
+.result-box.show{display:block;animation:fadeIn .3s ease}
+.result-copy{position:absolute;top:12px;right:12px;padding:4px 10px;background:var(--border);border:none;border-radius:4px;color:var(--muted);font-size:11px;cursor:pointer;transition:.15s}
+.result-copy:hover{background:var(--gold);color:#000}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.04em}
+.badge-active{background:rgba(39,174,96,.15);color:#27ae60;border:1px solid rgba(39,174,96,.3)}
+.badge-trial{background:rgba(212,168,67,.15);color:var(--gold);border:1px solid rgba(212,168,67,.3)}
+.badge-cancelled{background:rgba(192,57,43,.15);color:var(--rust);border:1px solid rgba(192,57,43,.3)}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:none}
+.alert.show{display:block}
+.alert-error{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c}
+.alert-success{background:rgba(39,174,96,.1);border:1px solid rgba(39,174,96,.3);color:#27ae60}
+
+/* LOADING */
+.spinner{width:16px;height:16px;border:2px solid rgba(212,168,67,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:none}
+.spinner.show{display:inline-block}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:var(--border);font-size:11px;letter-spacing:.1em;color:var(--muted)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:var(--radius);padding:4px;margin-bottom:24px}
+.tab{flex:1;padding:8px;text-align:center;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);transition:.15s;border:none;background:transparent;font-family:'Inter',sans-serif}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* STAT */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:32px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.stat-val{font-size:28px;font-weight:700;color:var(--gold);line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .form-row{grid-template-columns:1fr}
+  .nav{padding:0 16px}
+  .page{padding:24px 16px}
+}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+{% if session.user_id %}
+<nav class="nav">
+  <div class="nav-brand">Conta<span>IA</span></div>
+  <div class="nav-links">
+    <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
+    <a href="/ferramenta/cobranca" class="nav-link {% if 'cobranca' in request.path %}active{% endif %}">Cobranças</a>
+    <a href="/ferramenta/relatorio" class="nav-link {% if 'relatorio' in request.path %}active{% endif %}">Relatórios</a>
+    <a href="/ferramenta/receita" class="nav-link {% if 'receita' in request.path %}active{% endif %}">Receita Federal</a>
+    {% if user and user.is_admin %}<a href="/admin" class="nav-link {% if '/admin' in request.path %}active{% endif %}">Admin</a>{% endif %}
+    <span class="nav-user">{{ user.name if user else '' }}</span>
+    <a href="/logout" class="btn-logout">Sair</a>
+  </div>
+</nav>
+{% endif %}
+
+{% block body %}{% endblock %}
+
+<script>
+async function api(url, body){
+  const r = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+function copyText(el){
+  const box = el.closest('.result-box');
+  navigator.clipboard.writeText(box.dataset.text || box.innerText.replace('Copiar','').trim());
+  el.textContent='Copiado!';setTimeout(()=>el.textContent='Copiar',2000);
+}
+</script>
+</body>
+</html>

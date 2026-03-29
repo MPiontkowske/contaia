@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Relatórios — ContaIA{% endblock %}
+{% block body %}
+<div class="page">
+  <div style="margin-bottom:28px">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Ferramenta</div>
+    <h1 style="font-size:20px;font-weight:700">📊 Relatórios Gerenciais</h1>
+    <p style="color:var(--muted);font-size:13px;margin-top:4px">Números em linguagem simples. Em segundos.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab(0,'relatorio_mensal')">Mensal</button>
+    <button class="tab" onclick="setTab(1,'relatorio_dre')">DRE</button>
+    <button class="tab" onclick="setTab(2,'relatorio_comparativo')">Comparativo</button>
+    <button class="tab" onclick="setTab(3,'relatorio_anual')">Anual</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+    <div class="card">
+      <div class="card-title">Dados</div>
+      <div class="alert" id="alert" style="display:none;padding:12px;border-radius:8px;font-size:13px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:#e74c3c;margin-bottom:16px"></div>
+
+      <div id="form-0">
+        <div class="form-row">
+          <div class="form-group"><label>Empresa</label><input id="f0-empresa" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>Mês/Ano</label><input id="f0-mes_ano" placeholder="Janeiro/2026"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Faturamento (R$)</label><input id="f0-faturamento" placeholder="45.000,00"></div>
+          <div class="form-group"><label>Despesas (R$)</label><input id="f0-despesas" placeholder="32.000,00"></div>
+        </div>
+        <div class="form-group"><label>Lucro líquido (R$)</label><input id="f0-lucro" placeholder="13.000,00"></div>
+        <div class="form-group"><label>Observações (opcional)</label><textarea id="f0-observacoes" placeholder="Ex: mês com alta de vendas no final do período..."></textarea></div>
+      </div>
+
+      <div id="form-1" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Empresa</label><input id="f1-empresa" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>Período</label><input id="f1-periodo" placeholder="Jan-Dez 2025"></div>
+        </div>
+        <div class="form-group"><label>Dados do DRE</label><textarea id="f1-dre" rows="6" placeholder="Cole aqui os dados do DRE: receita bruta, deduções, lucro bruto, despesas operacionais, EBITDA, resultado líquido..."></textarea></div>
+      </div>
+
+      <div id="form-2" style="display:none">
+        <div class="form-group"><label>Empresa</label><input id="f2-empresa" placeholder="Silva Padaria Ltda"></div>
+        <div class="form-group"><label>Dados do mês anterior</label><textarea id="f2-mes_anterior" placeholder="Faturamento: R$ 40.000 / Despesas: R$ 30.000 / Lucro: R$ 10.000"></textarea></div>
+        <div class="form-group"><label>Dados do mês atual</label><textarea id="f2-mes_atual" placeholder="Faturamento: R$ 45.000 / Despesas: R$ 32.000 / Lucro: R$ 13.000"></textarea></div>
+      </div>
+
+      <div id="form-3" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Empresa</label><input id="f3-empresa" placeholder="Silva Padaria Ltda"></div>
+          <div class="form-group"><label>Ano</label><input id="f3-ano" placeholder="2025"></div>
+        </div>
+        <div class="form-group"><label>Dados anuais</label><textarea id="f3-dados" rows="5" placeholder="Faturamento total: R$ 540.000 / Lucro total: R$ 156.000 / Crescimento: 22%..."></textarea></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()" style="margin-top:8px">
+        <div class="spinner" id="spin"></div>
+        <span id="btn-txt">Gerar relatório com IA</span>
+      </button>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Resultado</div>
+        <div id="placeholder" style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Preencha os dados e clique em gerar.</div>
+        <div class="result-box" id="result">
+          <button class="result-copy" onclick="copyResult()">Copiar</button>
+          <div id="result-text"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentTab=0, currentTool='relatorio_mensal';
+function setTab(n,tool){
+  currentTab=n; currentTool=tool;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<4;i++) document.getElementById('form-'+i).style.display=i===n?'block':'none';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('placeholder').style.display='block';
+}
+function getCampos(){
+  const p='f'+currentTab+'-';
+  const campos={};
+  document.querySelectorAll('[id^="'+p+'"]').forEach(el=>{ campos[el.id.replace(p,'')]=el.value.trim(); });
+  return campos;
+}
+async function gerar(){
+  const btn=document.getElementById('btn-gerar'), spin=document.getElementById('spin'), txt=document.getElementById('btn-txt'), alert=document.getElementById('alert');
+  alert.style.display='none'; btn.disabled=true; spin.classList.add('show'); txt.textContent='Gerando...';
+  try{
+    const r=await fetch('/api/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool:currentTool,campos:getCampos()})});
+    const d=await r.json();
+    if(d.resultado){
+      document.getElementById('result-text').textContent=d.resultado;
+      document.getElementById('result').classList.add('show');
+      document.getElementById('placeholder').style.display='none';
+    } else { alert.textContent=d.error||'Erro ao gerar.'; alert.style.display='block'; }
+  } catch(e){ alert.textContent='Erro de conexão.'; alert.style.display='block'; }
+  btn.disabled=false; spin.classList.remove('show'); txt.textContent='Gerar relatório com IA';
+}
+function copyResult(){
+  navigator.clipboard.writeText(document.getElementById('result-text').textContent);
+  const btn=document.querySelector('.result-copy'); btn.textContent='Copiado!'; setTimeout(()=>btn.textContent='Copiar',2000);
+}
+</script>
+{% endblock %}
