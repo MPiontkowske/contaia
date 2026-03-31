@@ -547,6 +547,16 @@
     {% endif %}
   </nav>
 
+  {% if user.plan == 'trial' and user.trial_days_remaining is not none and user.trial_days_remaining <= 2 %}
+  <div style="padding:10px 12px;margin:0 10px 10px;background:var(--gold-dim);border:1px solid rgba(212,168,67,.3);border-radius:var(--radius);font-size:.78rem;line-height:1.5">
+    <div style="color:var(--gold);font-weight:700;margin-bottom:4px">
+      ⚠ Trial expira
+      {% if user.trial_days_remaining == 0 %}hoje{% elif user.trial_days_remaining == 1 %}amanhã{% else %}em {{ user.trial_days_remaining }} dias{% endif %}
+    </div>
+    <a href="/planos" style="color:var(--gold);font-weight:600;font-size:.76rem">Ver planos →</a>
+  </div>
+  {% endif %}
+
   <div class="sidebar-user">
     <div class="sidebar-user-name">{{ user.first_name }}</div>
     <div class="sidebar-user-plan plan-{{ user.plan }}">

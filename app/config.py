@@ -28,9 +28,23 @@ class Config:
     RATELIMIT_STORAGE_URI = "memory://"
     RATELIMIT_DEFAULT = "500 per day"
 
+    # --- E-mail (Flask-Mail) ---
+    MAIL_SERVER   = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_PORT     = int(os.environ.get("MAIL_PORT", 587))
+    MAIL_USE_TLS  = os.environ.get("MAIL_USE_TLS", "true").lower() == "true"
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.environ.get(
+        "MAIL_DEFAULT_SENDER", "ContaIA <noreply@contaia.com.br>"
+    )
+
+    # --- Monitoramento ---
+    SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
     # --- Produto ---
     TRIAL_DAYS = 7
     PLAN_PRICE_BRL = 97
+    WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "5511999999999")
 
 
 class DevelopmentConfig(Config):

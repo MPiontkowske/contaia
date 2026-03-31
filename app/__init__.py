@@ -2,7 +2,22 @@ import os
 import logging
 from flask import Flask
 from .config import config_map
-from .extensions import db, limiter
+from .extensions import db, limiter, mail
+
+
+def _init_sentry(dsn: str | None) -> None:
+    if not dsn:
+        return
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.flask import FlaskIntegration
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[FlaskIntegration()],
+            traces_sample_rate=0.1,
+        )
+    except Exception as e:
+        logging.getLogger(__name__).warning("Sentry não inicializado: %s", e)
 
 
 def create_app(env: str | None = None) -> Flask:
@@ -10,6 +25,8 @@ def create_app(env: str | None = None) -> Flask:
         env = os.environ.get("FLASK_ENV", "production")
 
     cfg_class = config_map.get(env, config_map["default"])
+
+    _init_sentry(os.environ.get("SENTRY_DSN"))
 
     if env == "production":
         try:
@@ -25,13 +42,17 @@ def create_app(env: str | None = None) -> Flask:
 
     db.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
 
     from .routes import register_blueprints
     register_blueprints(app)
 
     with app.app_context():
-        _init_db(app)
+        # Ordem importa: create_all primeiro, migrate colunas, depois seed admin
+        from .extensions import db as _db
+        _db.create_all()
         _run_migrations(app)
+        _init_db(app)
 
     return app
 
@@ -68,6 +89,7 @@ def _run_migrations(app: Flask) -> None:
         ("user",       "profile_nome",       "ALTER TABLE user ADD COLUMN profile_nome VARCHAR(120)"),
         ("user",       "profile_escritorio", "ALTER TABLE user ADD COLUMN profile_escritorio VARCHAR(120)"),
         ("user",       "profile_cargo",      "ALTER TABLE user ADD COLUMN profile_cargo VARCHAR(80)"),
+        ("user",       "trial_warned_at",    "ALTER TABLE user ADD COLUMN trial_warned_at DATETIME"),
         ("generation", "feedback",           "ALTER TABLE generation ADD COLUMN feedback BOOLEAN"),
     ]
 
@@ -87,9 +109,6 @@ def _run_migrations(app: Flask) -> None:
 def _init_db(app: Flask) -> None:
     from .models import User, Generation
     from werkzeug.security import generate_password_hash
-    from datetime import datetime
-
-    db.create_all()
 
     admin_email = app.config.get("ADMIN_EMAIL", "admin@contaia.com.br")
     admin_pwd = app.config.get("ADMIN_PASSWORD")

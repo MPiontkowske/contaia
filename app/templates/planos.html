@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}Planos — ContaIA{% endblock %}
+
+{% block extra_head %}
+<style>
+  .plans-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Plan cards grid */
+  .plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 640px) {
+    .plans-grid { grid-template-columns: 1fr; }
+  }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-card.featured {
+    border-color: var(--gold);
+    background: linear-gradient(160deg, rgba(212,168,67,.06) 0%, var(--surface) 60%);
+  }
+  .plan-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #000;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+
+  .plan-name {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+  .plan-price {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .plan-price span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+  .plan-price-period {
+    font-size: .78rem;
+    color: var(--text-faint);
+    margin-bottom: 20px;
+  }
+
+  .plan-features {
+    list-style: none;
+    flex: 1;
+    margin-bottom: 24px;
+  }
+  .plan-features li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: .85rem;
+    color: var(--text-dim);
+    padding: 5px 0;
+    line-height: 1.45;
+  }
+  .plan-features li .check {
+    color: var(--green);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .plan-features li .cross {
+    color: var(--text-faint);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* FAQ */
+  .faq-list { display: flex; flex-direction: column; gap: 12px; }
+  .faq-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .faq-q {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .faq-a {
+    font-size: .82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* Trial banner */
+  .trial-status-bar {
+    background: var(--gold-dim);
+    border: 1px solid rgba(212,168,67,.3);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    font-size: .85rem;
+    flex-wrap: wrap;
+  }
+  .trial-status-bar strong { color: var(--gold); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">Planos</div>
+  <div class="page-subtitle">Escolha o plano ideal para o seu escritório contábil</div>
+</div>
+
+<div class="page-body">
+  <div class="plans-wrap">
+
+    <!-- Trial status bar -->
+    {% if user.plan == 'trial' %}
+    <div class="trial-status-bar">
+      <span>
+        {% if user.trial_days_remaining == 0 %}
+          Seu trial <strong>expirou</strong>. Assine para continuar usando o ContaIA.
+        {% elif user.trial_days_remaining == 1 %}
+          Seu trial expira <strong>amanhã</strong>. Não perca o acesso!
+        {% else %}
+          Você está no trial gratuito: <strong>{{ user.trial_days_remaining }} dias restantes</strong>.
+        {% endif %}
+      </span>
+    </div>
+    {% elif user.plan == 'active' %}
+    <div class="alert alert-success" style="margin-bottom:28px">
+      Você já possui o <strong>ContaIA Pro ativo</strong>. Aproveite todas as ferramentas sem limites!
+    </div>
+    {% endif %}
+
+    <!-- Plan cards -->
+    <div class="plans-grid">
+
+      <!-- Trial (free) -->
+      <div class="plan-card">
+        <div class="plan-name">Trial</div>
+        <div class="plan-price">R$ 0 <span></span></div>
+        <div class="plan-price-period">7 dias gratuitos</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> Acesso a todas as ferramentas</li>
+          <li><span class="check">✓</span> Histórico e favoritos</li>
+          <li><span class="check">✓</span> Templates reutilizáveis</li>
+          <li><span class="cross">✕</span> <span style="color:var(--text-faint)">Uso contínuo após 7 dias</span></li>
+          <li><span class="cross">✕</span> <span style="color:var(--text-faint)">Suporte prioritário</span></li>
+        </ul>
+        <div class="btn btn-outline btn-full" style="pointer-events:none;opacity:.5;justify-content:center">Plano atual</div>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan-card featured">
+        <div class="plan-badge">RECOMENDADO</div>
+        <div class="plan-name" style="color:var(--gold)">ContaIA Pro</div>
+        <div class="plan-price" style="color:var(--gold)">R$ 97 <span>/mês</span></div>
+        <div class="plan-price-period">Cancele a qualquer momento</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> Cobranças sem constrangimento — lembretes, parcelamento, reajuste</li>
+          <li><span class="check">✓</span> Relatórios gerenciais com IA (mensal, DRE, comparativo, anual)</li>
+          <li><span class="check">✓</span> Comunicações com a Receita Federal</li>
+          <li><span class="check">✓</span> Histórico ilimitado e favoritos</li>
+          <li><span class="check">✓</span> Templates para reutilizar campos</li>
+          <li><span class="check">✓</span> Pré-preenchimento com dados do seu perfil</li>
+          <li><span class="check">✓</span> Suporte por WhatsApp</li>
+        </ul>
+
+        {% set wa_msg = "Olá! Quero assinar o ContaIA Pro. Meu e-mail cadastrado é: " ~ user.email %}
+        <a href="https://wa.me/{{ whatsapp }}?text={{ wa_msg | urlencode }}"
+           target="_blank" rel="noopener"
+           class="btn btn-primary btn-full">
+          Assinar por WhatsApp →
+        </a>
+        <div style="text-align:center;margin-top:10px;font-size:.75rem;color:var(--text-faint)">
+          Ativação em até 1 hora útil
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FAQ -->
+    <div style="margin-bottom:12px">
+      <div class="card-title">Perguntas frequentes</div>
+    </div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <div class="faq-q">Como funciona o pagamento?</div>
+        <div class="faq-a">
+          O pagamento é mensal e pode ser feito via Pix ou boleto.
+          Você receberá as instruções pelo WhatsApp após o contato.
+          Cancele quando quiser, sem multa.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Quanto tempo leva para ativar o acesso?</div>
+        <div class="faq-a">
+          Após a confirmação do pagamento, seu acesso é ativado em até 1 hora útil
+          (segunda a sexta, 9h às 18h).
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Posso usar o ContaIA em mais de um dispositivo?</div>
+        <div class="faq-a">
+          Sim. Sua conta funciona em qualquer navegador — computador, tablet ou celular.
+          O histórico e favoritos ficam sincronizados automaticamente.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Os textos gerados são confidenciais?</div>
+        <div class="faq-a">
+          Sim. Os dados que você insere são usados exclusivamente para gerar o texto
+          e ficam armazenados na sua conta. Não compartilhamos informações de clientes
+          com terceiros.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">O ContaIA substitui a revisão do contador?</div>
+        <div class="faq-a">
+          Não. O ContaIA é um copiloto — ele agiliza a escrita de comunicações e
+          relatórios, mas o profissional responsável deve sempre revisar o conteúdo
+          antes de enviá-lo ao cliente ou à Receita Federal.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

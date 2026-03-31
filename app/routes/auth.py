@@ -7,6 +7,18 @@ from ..models import User
 auth_bp = Blueprint("auth", __name__)
 
 
+def _maybe_send_trial_warning(user) -> None:
+    """Dispara o e-mail D-2 ao fazer login, uma única vez."""
+    days = user.trial_days_remaining
+    if days is None or days > 2 or user.trial_warned_at is not None:
+        return
+    # Marca antes de enviar para evitar reenvio em logins simultâneos
+    user.trial_warned_at = datetime.utcnow()
+    db.session.flush()
+    from ..services.email import send_trial_expiry_warning
+    send_trial_expiry_warning(user)
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 @limiter.limit("15 per minute", methods=["POST"])
 def login():
@@ -26,6 +38,7 @@ def login():
         session["user_id"] = user.id
 
         user.last_login_at = datetime.utcnow()
+        _maybe_send_trial_warning(user)
         db.session.commit()
 
         return jsonify({"ok": True, "admin": user.is_admin})

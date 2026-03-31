@@ -66,3 +66,12 @@ def sem_acesso():
 def perfil():
     user = db.session.get(User, session["user_id"])
     return render_template("perfil.html", user=user)
+
+
+@main_bp.route("/planos")
+@login_required
+def planos():
+    from flask import current_app
+    user = db.session.get(User, session["user_id"])
+    whatsapp = current_app.config.get("WHATSAPP_NUMBER", "5511999999999")
+    return render_template("planos.html", user=user, whatsapp=whatsapp)

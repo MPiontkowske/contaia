@@ -46,6 +46,7 @@ class User(db.Model):
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_login_at     = db.Column(db.DateTime)
+    trial_warned_at   = db.Column(db.DateTime)  # quando o e-mail D-2 foi enviado
     is_admin          = db.Column(db.Boolean, default=False)
 
     # Perfil do contador — pré-preenchimento em formulários

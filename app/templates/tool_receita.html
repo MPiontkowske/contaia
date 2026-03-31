@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Receita Federal — ContaIA{% endblock %}
 
+{% block extra_head %}
+<style>
+.template-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; }
+.template-bar select { flex:1; background:transparent; border:none; color:var(--text-dim); font-size:.82rem; outline:none; cursor:pointer; }
+.template-bar select option { background:var(--surface-2); }
+.save-tmpl-form { display:none; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-top:10px; }
+.save-tmpl-form .inner { display:flex; gap:8px; }
+.feedback-row { display:none; align-items:center; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.feedback-row span { font-size:.78rem; color:var(--text-faint); }
+.btn-feedback { background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:.9rem; color:var(--text-dim); transition:background .15s, border-color .15s; }
+.btn-feedback:hover { background:var(--surface-3); border-color:var(--border-2); }
+.btn-feedback.selected-pos { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+.btn-feedback.selected-neg { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div class="page-title">🏛️ Receita Federal</div>
@@ -10,7 +26,7 @@
 <div class="page-body">
 
 <div class="notice">
-  ⚠️ <strong>Aviso importante:</strong> Os textos gerados pela IA são <strong>rascunhos de apoio</strong> e devem ser revisados por um contador ou advogado tributarista habilitado antes do envio. A ContaIA auxilia na redação e organização — não substitui a análise jurídica ou tributária profissional.
+  ⚠️ <strong>Aviso importante:</strong> Os textos gerados são <strong>rascunhos de apoio</strong> e devem ser revisados por contador ou advogado tributarista habilitado antes do envio. A ContaIA auxilia na redação — não substitui análise jurídica ou tributária profissional.
 </div>
 
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start">
@@ -18,6 +34,16 @@
   <!-- Coluna esquerda: formulário -->
   <div>
     <div class="card">
+
+      <!-- Seletor de templates -->
+      <div class="template-bar" id="template-bar">
+        <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
+        <select id="template-select" onchange="loadTemplate(this.value)">
+          <option value="">— Formulário em branco —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="btn-del-tmpl" onclick="deleteTemplate()" style="display:none" title="Remover template">✕</button>
+      </div>
+
       <div class="tabs">
         <button class="tab-btn active" data-tab="0">Intimação</button>
         <button class="tab-btn" data-tab="1">Defesa</button>
@@ -31,8 +57,8 @@
           <div class="form-group"><label class="form-label">Contribuinte / Razão Social</label><input class="form-control" id="t0-contribuinte" placeholder="Ex: Padaria do João Ltda"></div>
           <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t0-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
         </div>
-        <div class="form-group"><label class="form-label">Texto da intimação recebida</label><textarea class="form-control" id="t0-intimacao" placeholder="Cole aqui o texto da intimação ou descreva o que foi solicitado pela Receita Federal…" rows="4"></textarea></div>
-        <div class="form-group"><label class="form-label">Informações para embasar a resposta</label><textarea class="form-control" id="t0-informacoes" placeholder="Descreva os fatos, documentos disponíveis e argumentos que devem constar na resposta…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Texto da intimação recebida</label><textarea class="form-control" id="t0-intimacao" placeholder="Cole aqui o texto da intimação ou descreva o que foi solicitado…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Informações para embasar a resposta</label><textarea class="form-control" id="t0-informacoes" placeholder="Descreva os fatos, documentos disponíveis e argumentos…" rows="4"></textarea></div>
       </div>
 
       <!-- Tab 1: Defesa / Impugnação -->
@@ -41,8 +67,8 @@
           <div class="form-group"><label class="form-label">Contribuinte / Razão Social</label><input class="form-control" id="t1-contribuinte" placeholder="Ex: Padaria do João Ltda"></div>
           <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t1-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
         </div>
-        <div class="form-group"><label class="form-label">Descrição do auto de infração</label><textarea class="form-control" id="t1-auto" placeholder="Descreva o auto de infração: tributo, período, valor, fundamento legal citado…" rows="4"></textarea></div>
-        <div class="form-group"><label class="form-label">Argumentos e fatos para a defesa</label><textarea class="form-control" id="t1-argumentos" placeholder="Liste os argumentos, fatos e documentos que fundamentam a defesa…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Descrição do auto de infração</label><textarea class="form-control" id="t1-auto" placeholder="Tributo, período, valor, fundamento legal citado…" rows="4"></textarea></div>
+        <div class="form-group"><label class="form-label">Argumentos e fatos para a defesa</label><textarea class="form-control" id="t1-argumentos" placeholder="Fatos, documentos e fundamentos que embasam a defesa…" rows="4"></textarea></div>
       </div>
 
       <!-- Tab 2: Avisar Cliente -->
@@ -79,6 +105,15 @@
         <span id="btn-text">Gerar documento</span>
         <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
       </button>
+
+      <div class="save-tmpl-form" id="save-tmpl-form">
+        <div style="font-size:.75rem; color:var(--text-faint); margin-bottom:6px">Salvar campos atuais como template:</div>
+        <div class="inner">
+          <input class="form-control" id="tmpl-nome" placeholder="Ex: Resposta intimação IRPJ" style="font-size:.83rem">
+          <button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-tmpl-form').style.display='none'">✕</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -87,16 +122,23 @@
     <div class="card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
         <div class="card-title" style="margin-bottom:0">Resultado</div>
-        <div class="result-actions" id="result-actions" style="display:none; margin-top:0">
+        <div id="result-actions" class="result-actions" style="display:none; margin-top:0">
           <button class="btn btn-outline btn-sm" onclick="copiarResultado()">⎘ Copiar</button>
           <button class="btn btn-outline btn-sm" id="btn-fav" onclick="favoritarAtual()">☆ Favoritar</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleSaveTmpl()">💾 Template</button>
         </div>
       </div>
       <div id="result-box" class="result-box">
         <div class="result-placeholder">O documento gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar documento</strong>.</div>
       </div>
       <div id="pos-aviso" style="display:none; margin-top:10px" class="notice">
-        Revise o texto gerado com atenção antes de utilizar. Este rascunho não substitui análise profissional.
+        Revise o texto com atenção antes de utilizar. Este rascunho não substitui análise profissional.
+      </div>
+      <div class="feedback-row" id="feedback-row">
+        <span>Foi útil?</span>
+        <button class="btn-feedback" id="btn-like" onclick="enviarFeedback(true)">👍</button>
+        <button class="btn-feedback" id="btn-dislike" onclick="enviarFeedback(false)">👎</button>
+        <span id="feedback-obg" style="display:none; font-size:.75rem; color:var(--green)">Obrigado pelo feedback!</span>
       </div>
     </div>
 
@@ -127,9 +169,34 @@
 </div>
 
 <script>
-const TOOLS = ['receita_intimacao','receita_defesa','receita_comunicar_cliente','receita_parcelamento'];
+const TOOL_KEYS = ['receita_intimacao','receita_defesa','receita_comunicar_cliente','receita_parcelamento'];
+const PROFILE = {
+  nome:       {{ (user.profile_nome or user.name or '') | tojson }},
+  escritorio: {{ (user.profile_escritorio or '') | tojson }},
+};
+const TEMPLATES_DATA = {{ templates_json | safe }};
+
 let activeTab = 0;
 let currentGenId = null;
+
+(function initTemplates() {
+  const sel = document.getElementById('template-select');
+  TEMPLATES_DATA.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.nome;
+    opt.dataset.tool = t.tool;
+    opt.dataset.campos = JSON.stringify(t.campos);
+    sel.appendChild(opt);
+  });
+  if (TEMPLATES_DATA.length === 0) document.getElementById('template-bar').style.opacity = '.5';
+})();
+
+// Pré-preencher campos de contador (tab 2 - Avisar Cliente)
+window.addEventListener('DOMContentLoaded', () => {
+  const contadorEl = document.getElementById('t2-contador');
+  if (contadorEl && !contadorEl.value && PROFILE.nome) contadorEl.value = PROFILE.nome;
+});
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -140,14 +207,52 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-' + t).classList.add('active');
     activeTab = t;
     resetResult();
+    // Pré-preencher contador na aba 2
+    if (t === 2) {
+      const el = document.getElementById('t2-contador');
+      if (el && !el.value && PROFILE.nome) el.value = PROFILE.nome;
+    }
   });
 });
 
 function resetResult() {
   document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O documento gerado aparecerá aqui.<br>Preencha os dados e clique em <strong>Gerar documento</strong>.</div>';
   document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('feedback-row').style.display = 'none';
   document.getElementById('pos-aviso').style.display = 'none';
+  document.getElementById('save-tmpl-form').style.display = 'none';
   currentGenId = null;
+}
+
+function loadTemplate(id) {
+  const delBtn = document.getElementById('btn-del-tmpl');
+  if (!id) { delBtn.style.display = 'none'; return; }
+  const opt = document.querySelector(`#template-select option[value="${id}"]`);
+  if (!opt) return;
+  const campos = JSON.parse(opt.dataset.campos || '{}');
+  const toolKey = opt.dataset.tool || '';
+  const tabIdx = TOOL_KEYS.indexOf(toolKey);
+  if (tabIdx >= 0 && tabIdx !== activeTab) document.querySelectorAll('.tab-btn')[tabIdx].click();
+  Object.entries(campos).forEach(([key, value]) => {
+    const el = document.getElementById('t' + activeTab + '-' + key);
+    if (el) el.value = value;
+  });
+  delBtn.style.display = 'inline-flex';
+  toast('Template carregado');
+}
+
+async function deleteTemplate() {
+  const sel = document.getElementById('template-select');
+  const id = sel.value;
+  if (!id || !confirm('Remover este template?')) return;
+  const data = await api(`/api/templates/${id}`, null, 'DELETE');
+  if (data.ok) {
+    sel.querySelector(`option[value="${id}"]`).remove();
+    sel.value = '';
+    document.getElementById('btn-del-tmpl').style.display = 'none';
+    toast('Template removido');
+    if (sel.options.length <= 1) document.getElementById('template-bar').style.opacity = '.5';
+  }
 }
 
 function getCampos() {
@@ -164,25 +269,26 @@ async function gerar() {
   const spinner = document.getElementById('spinner');
   const btnText = document.getElementById('btn-text');
   const box = document.getElementById('result-box');
-
   btn.disabled = true;
   spinner.style.display = 'inline-block';
   btnText.textContent = 'Gerando…';
   box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando documento…</div>';
+  document.getElementById('feedback-row').style.display = 'none';
   document.getElementById('pos-aviso').style.display = 'none';
-
   try {
-    const data = await api('/api/gerar', { tool: TOOLS[activeTab], campos: getCampos() });
+    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
     if (data.resultado) {
       box.textContent = data.resultado;
       currentGenId = data.id || null;
       document.getElementById('result-actions').style.display = 'flex';
+      document.getElementById('feedback-row').style.display = 'flex';
       document.getElementById('pos-aviso').style.display = 'block';
+      resetFeedbackUI();
     } else {
-      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar. Tente novamente.'}</div>`;
+      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar.'}</div>`;
     }
   } catch {
-    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão. Tente novamente.</div>';
+    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão.</div>';
   } finally {
     btn.disabled = false;
     spinner.style.display = 'none';
@@ -190,18 +296,52 @@ async function gerar() {
   }
 }
 
-function copiarResultado() {
-  const txt = document.getElementById('result-box').textContent;
-  if (txt) copyText(txt);
-}
+function copiarResultado() { const t = document.getElementById('result-box').textContent; if (t) copyText(t); }
 
 async function favoritarAtual() {
   if (!currentGenId) return;
   const btn = document.getElementById('btn-fav');
   const data = await api(`/api/favoritar/${currentGenId}`);
+  if (data.ok) { btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar'; toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos'); }
+}
+
+function toggleSaveTmpl() {
+  const f = document.getElementById('save-tmpl-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') document.getElementById('tmpl-nome').focus();
+}
+
+async function salvarTemplate() {
+  const nome = document.getElementById('tmpl-nome').value.trim();
+  if (!nome) { toast('Digite um nome para o template', 'error'); return; }
+  const data = await api('/api/templates', { tool: TOOL_KEYS[activeTab], nome, campos: getCampos() });
   if (data.ok) {
-    btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar';
-    toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+    const sel = document.getElementById('template-select');
+    const opt = document.createElement('option');
+    opt.value = data.id; opt.textContent = data.nome;
+    opt.dataset.tool = TOOL_KEYS[activeTab];
+    opt.dataset.campos = JSON.stringify(getCampos());
+    sel.appendChild(opt);
+    document.getElementById('save-tmpl-form').style.display = 'none';
+    document.getElementById('tmpl-nome').value = '';
+    document.getElementById('template-bar').style.opacity = '1';
+    toast('Template salvo!');
+  } else { toast(data.error || 'Erro ao salvar', 'error'); }
+}
+
+function resetFeedbackUI() {
+  document.getElementById('btn-like').className = 'btn-feedback';
+  document.getElementById('btn-dislike').className = 'btn-feedback';
+  document.getElementById('feedback-obg').style.display = 'none';
+}
+
+async function enviarFeedback(value) {
+  if (!currentGenId) return;
+  const data = await api(`/api/feedback/${currentGenId}`, { value });
+  if (data.ok) {
+    document.getElementById('btn-like').className = 'btn-feedback' + (value ? ' selected-pos' : '');
+    document.getElementById('btn-dislike').className = 'btn-feedback' + (!value ? ' selected-neg' : '');
+    document.getElementById('feedback-obg').style.display = 'inline';
   }
 }
 </script>
