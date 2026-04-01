@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, session
 from ..extensions import db
 from ..models import User, Generation
 from ..decorators import admin_required
@@ -9,6 +9,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.route("/")
 @admin_required
 def admin_dashboard():
+    current_user = db.session.get(User, session["user_id"])
     users = User.query.order_by(User.created_at.desc()).all()
     total_geracoes = Generation.query.count()
     active_count = User.query.filter_by(plan="active").count()
@@ -16,6 +17,7 @@ def admin_dashboard():
     cancelled_count = User.query.filter_by(plan="cancelled").count()
     return render_template(
         "admin.html",
+        user=current_user,
         users=users,
         total_geracoes=total_geracoes,
         active=active_count,
