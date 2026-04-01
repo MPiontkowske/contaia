@@ -162,7 +162,7 @@
       <input class="form-control" type="password" id="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
     </div>
 
-    <button class="btn" id="btn-reg" onclick="register()">
+    <button class="btn" id="btn-register">
       <span id="btn-text">Criar conta grátis</span>
       <div class="spinner" id="spinner" style="display:none"></div>
     </button>
@@ -175,51 +175,6 @@
   </div>
 </div>
 
-<script>
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
-
-  async function register() {
-    const name    = document.getElementById('name').value.trim();
-    const email   = document.getElementById('email').value.trim();
-    const pwd     = document.getElementById('password').value;
-    const btn     = document.getElementById('btn-reg');
-    const spinner = document.getElementById('spinner');
-    const btnText = document.getElementById('btn-text');
-
-    if (!name || !email || !pwd) { showError('Preencha todos os campos.'); return; }
-    if (pwd.length < 6) { showError('Senha deve ter ao menos 6 caracteres.'); return; }
-
-    btn.disabled = true;
-    spinner.style.display = 'block';
-    btnText.textContent = 'Criando conta…';
-    document.getElementById('alert-msg').classList.remove('show');
-
-    try {
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password: pwd }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        window.location.href = '/dashboard';
-      } else {
-        showError(data.error || 'Erro ao criar conta.');
-      }
-    } catch {
-      showError('Erro de conexão. Tente novamente.');
-    } finally {
-      btn.disabled = false;
-      spinner.style.display = 'none';
-      btnText.textContent = 'Criar conta grátis';
-    }
-  }
-
-  function showError(msg) {
-    const el = document.getElementById('alert-msg');
-    el.textContent = msg;
-    el.classList.add('show');
-  }
-</script>
+<script src="/static/js/register.js"></script>
 </body>
 </html>
