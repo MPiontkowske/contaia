@@ -312,8 +312,6 @@ TOOLS: dict = {
             f"pedido formal de parcelamento e justificativa."
         ),
     },
-}
-
 
     # ─── COMUNICAÇÃO COM CLIENTES ────────────────────────────────────────────────
     "cliente_documentos": {
