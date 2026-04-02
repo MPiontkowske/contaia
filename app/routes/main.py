@@ -36,12 +36,22 @@ def historico():
     categoria = request.args.get("categoria", "")
     page = request.args.get("page", 1, type=int)
 
+    busca = request.args.get("q", "").strip()
     query = Generation.query.filter_by(user_id=user.id)
 
     from ..models import TOOL_CATEGORY
     if categoria:
         valid_tools = [k for k, v in TOOL_CATEGORY.items() if v == categoria]
         query = query.filter(Generation.tool.in_(valid_tools))
+
+    if busca:
+        termo = f"%{busca}%"
+        query = query.filter(
+            db.or_(
+                Generation.titulo.ilike(termo),
+                Generation.resultado.ilike(termo),
+            )
+        )
 
     paginacao = query.order_by(Generation.created_at.desc()).paginate(
         page=page, per_page=20, error_out=False
@@ -51,6 +61,7 @@ def historico():
         user=user,
         paginacao=paginacao,
         categoria=categoria,
+        busca=busca,
     )
 
 

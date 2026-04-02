@@ -77,6 +77,10 @@ def register():
 
         session.permanent = True
         session["user_id"] = user.id
+
+        from ..services.email import send_welcome
+        send_welcome(user)
+
         return jsonify({"ok": True})
 
     return render_template("register.html")

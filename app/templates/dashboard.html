@@ -10,14 +10,24 @@
 <div class="page-body">
 
   {% if user.plan == 'trial' %}
-  <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-    <span>⏳ Seu período de teste encerra em <strong>{{ user.trial_days_remaining }} dia(s)</strong>.</span>
-    <a href="/sem-acesso" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Ver planos</a>
-  </div>
+    {% set dias = user.trial_days_remaining %}
+    {% if dias <= 2 %}
+    <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>⚠ Seu trial expira
+        {% if dias == 0 %}hoje{% elif dias == 1 %}amanhã{% else %}em {{ dias }} dias{% endif %} — não perca o acesso!
+      </span>
+      <a href="/planos" class="btn btn-primary btn-sm">Assinar agora</a>
+    </div>
+    {% else %}
+    <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>⏳ Trial: <strong>{{ dias }} dias restantes</strong> · {{ total }} texto{{ 's' if total != 1 else '' }} gerado{{ 's' if total != 1 else '' }}</span>
+      <a href="/planos" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Ver planos</a>
+    </div>
+    {% endif %}
   {% elif not user.has_access %}
   <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
     <span>🔒 Seu acesso expirou. Assine para continuar usando as ferramentas.</span>
-    <a href="/sem-acesso" class="btn btn-primary btn-sm">Assinar agora</a>
+    <a href="/planos" class="btn btn-primary btn-sm">Assinar agora</a>
   </div>
   {% endif %}
 
@@ -31,10 +41,23 @@
       <div class="stat-value">{{ favoritos }}</div>
       <div class="stat-label">Favoritos</div>
     </div>
+    {% if user.plan == 'trial' %}
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px">
+        <div class="stat-value" style="color:var(--gold)">{{ user.trial_days_remaining }}d</div>
+        <span style="font-size:.7rem; color:var(--text-faint)">de 7</span>
+      </div>
+      <div class="stat-label">Dias de trial</div>
+      <div style="margin-top:8px; height:4px; background:var(--surface-3); border-radius:4px; overflow:hidden">
+        <div style="height:100%; width:{{ ((7 - user.trial_days_remaining) / 7 * 100) | int }}%; background:var(--gold); border-radius:4px; transition:width .3s"></div>
+      </div>
+    </div>
+    {% else %}
     <div class="stat-card">
       <div class="stat-value">3</div>
       <div class="stat-label">Ferramentas</div>
     </div>
+    {% endif %}
     <div class="stat-card">
       <div class="stat-value" style="font-size:1rem; color:
         {% if user.plan == 'active' %}var(--green)

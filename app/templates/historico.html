@@ -9,13 +9,29 @@
 
 <div class="page-body">
 
-  <!-- Filtros -->
+  <!-- Busca + Filtros -->
+  <form method="get" action="/historico" style="margin-bottom:14px">
+    {% if categoria %}<input type="hidden" name="categoria" value="{{ categoria }}">{% endif %}
+    <div style="display:flex; gap:8px">
+      <input type="text" name="q" value="{{ busca }}" placeholder="Buscar no histórico…"
+             class="form-control" style="max-width:360px; padding:7px 12px; font-size:.85rem">
+      <button type="submit" class="btn btn-outline btn-sm">Buscar</button>
+      {% if busca %}<a href="/historico{% if categoria %}?categoria={{ categoria }}{% endif %}" class="btn btn-ghost btn-sm">✕ Limpar</a>{% endif %}
+    </div>
+  </form>
+
   <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap">
-    <a href="/historico" class="btn {% if not categoria %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Todos</a>
-    <a href="/historico?categoria=cobranca" class="btn {% if categoria == 'cobranca' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">💼 Cobranças</a>
-    <a href="/historico?categoria=relatorio" class="btn {% if categoria == 'relatorio' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📊 Relatórios</a>
-    <a href="/historico?categoria=receita" class="btn {% if categoria == 'receita' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">🏛️ Receita Federal</a>
+    <a href="/historico{% if busca %}?q={{ busca }}{% endif %}" class="btn {% if not categoria %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Todos</a>
+    <a href="/historico?categoria=cobranca{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'cobranca' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">💼 Cobranças</a>
+    <a href="/historico?categoria=relatorio{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'relatorio' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📊 Relatórios</a>
+    <a href="/historico?categoria=receita{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'receita' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">🏛️ Receita Federal</a>
   </div>
+
+  {% if busca %}
+  <div style="font-size:.82rem; color:var(--text-dim); margin-bottom:16px">
+    {{ paginacao.total }} resultado{{ 's' if paginacao.total != 1 }} para "<strong>{{ busca }}</strong>"
+  </div>
+  {% endif %}
 
   {% if paginacao.items %}
   <div class="history-list">
