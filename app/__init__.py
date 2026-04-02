@@ -98,8 +98,10 @@ def _run_migrations(app: Flask) -> None:
         ("user",       "profile_nome",       "ALTER TABLE user ADD COLUMN profile_nome VARCHAR(120)"),
         ("user",       "profile_escritorio", "ALTER TABLE user ADD COLUMN profile_escritorio VARCHAR(120)"),
         ("user",       "profile_cargo",      "ALTER TABLE user ADD COLUMN profile_cargo VARCHAR(80)"),
-        ("user",       "trial_warned_at",    "ALTER TABLE user ADD COLUMN trial_warned_at DATETIME"),
-        ("generation", "feedback",           "ALTER TABLE generation ADD COLUMN feedback BOOLEAN"),
+        ("user",       "trial_warned_at",   "ALTER TABLE user ADD COLUMN trial_warned_at DATETIME"),
+        ("user",       "reset_token",       "ALTER TABLE user ADD COLUMN reset_token VARCHAR(64)"),
+        ("user",       "reset_token_expires","ALTER TABLE user ADD COLUMN reset_token_expires DATETIME"),
+        ("generation", "feedback",          "ALTER TABLE generation ADD COLUMN feedback BOOLEAN"),
     ]
 
     with db.engine.connect() as conn:

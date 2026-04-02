@@ -65,6 +65,65 @@ _FEATURES = [
 ]
 
 
+_RESET_HTML = """\
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#09090f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#09090f;padding:40px 0">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#111118;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:36px 32px;color:#e8e8e0">
+        <tr><td style="padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.07)">
+          <span style="font-size:1.4rem;font-weight:700;color:#e8e8e0">Conta<span style="color:#d4a843">IA</span></span>
+        </td></tr>
+        <tr><td style="padding-top:28px">
+          <p style="margin:0 0 16px;font-size:1rem;font-weight:700;color:#e8e8e0">Olá, {nome}!</p>
+          <p style="margin:0 0 20px;color:#888;font-size:.9rem;line-height:1.65">
+            Recebemos uma solicitação para redefinir a senha da sua conta ContaIA.<br>
+            Clique no botão abaixo para criar uma nova senha. O link expira em <strong style="color:#d4a843">2 horas</strong>.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="margin:24px 0">
+            <tr><td>
+              <a href="{url}" style="display:inline-block;background:#d4a843;color:#000;font-weight:700;font-size:.9rem;padding:12px 28px;border-radius:8px;text-decoration:none">
+                Redefinir minha senha &rarr;
+              </a>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 8px;color:#555;font-size:.78rem;line-height:1.6">
+            Se você não solicitou a redefinição, ignore este e-mail — sua senha permanece a mesma.
+          </p>
+          <p style="margin:16px 0 0;color:#555;font-size:.75rem">
+            &copy; ContaIA &mdash; Copiloto para contadores
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+
+
+def send_password_reset(user, token: str) -> bool:
+    """Envia e-mail com link para redefinição de senha. Retorna True se enviou."""
+    if not current_app.config.get("MAIL_USERNAME"):
+        log.debug("MAIL_USERNAME não configurado — e-mail de reset ignorado")
+        return False
+    try:
+        reset_url = url_for("auth.redefinir_senha", token=token, _external=True)
+        html_body = _RESET_HTML.format(nome=user.first_name, url=reset_url)
+        msg = Message(
+            subject="Redefinição de senha — ContaIA",
+            recipients=[user.email],
+            html=html_body,
+        )
+        mail.send(msg)
+        log.info("E-mail de reset enviado para %s", user.email)
+        return True
+    except Exception as exc:
+        log.error("Erro ao enviar e-mail de reset para %s: %s", user.email, exc)
+        return False
+
+
 def send_trial_expiry_warning(user) -> bool:
     """Envia e-mail D-2 avisando que o trial expira em breve.
 

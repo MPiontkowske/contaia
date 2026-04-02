@@ -45,9 +45,11 @@ class User(db.Model):
     trial_ends    = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=7))
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login_at     = db.Column(db.DateTime)
-    trial_warned_at   = db.Column(db.DateTime)  # quando o e-mail D-2 foi enviado
-    is_admin          = db.Column(db.Boolean, default=False)
+    last_login_at        = db.Column(db.DateTime)
+    trial_warned_at      = db.Column(db.DateTime)
+    reset_token          = db.Column(db.String(64), index=True)
+    reset_token_expires  = db.Column(db.DateTime)
+    is_admin             = db.Column(db.Boolean, default=False)
 
     # Perfil do contador — pré-preenchimento em formulários
     profile_nome      = db.Column(db.String(120))   # Nome do contador

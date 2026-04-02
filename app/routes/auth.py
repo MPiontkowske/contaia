@@ -1,6 +1,7 @@
+import secrets
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 from ..extensions import db, limiter
 from ..models import User
 
@@ -85,6 +86,53 @@ def register():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/esqueci-senha", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
+def esqueci_senha():
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        email = data.get("email", "").strip().lower()
+        if not email:
+            return jsonify({"error": "Informe o e-mail."}), 400
+
+        user = User.query.filter_by(email=email).first()
+        # Sempre retorna OK para não revelar se o e-mail existe
+        if user:
+            token = secrets.token_urlsafe(32)
+            user.reset_token = token
+            user.reset_token_expires = datetime.utcnow() + timedelta(hours=2)
+            db.session.commit()
+            from ..services.email import send_password_reset
+            send_password_reset(user, token)
+
+        return jsonify({"ok": True})
+
+    return render_template("esqueci_senha.html")
+
+
+@auth_bp.route("/redefinir-senha/<token>", methods=["GET", "POST"])
+def redefinir_senha(token):
+    user = User.query.filter_by(reset_token=token).first()
+    token_invalido = not user or (
+        user.reset_token_expires and user.reset_token_expires < datetime.utcnow()
+    )
+
+    if request.method == "POST":
+        if token_invalido:
+            return jsonify({"error": "Link expirado ou inválido."}), 400
+        data = request.get_json(silent=True) or {}
+        nova_senha = data.get("password", "")
+        if len(nova_senha) < 6:
+            return jsonify({"error": "Senha deve ter ao menos 6 caracteres."}), 400
+        user.password_hash = generate_password_hash(nova_senha)
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
+        return jsonify({"ok": True})
+
+    return render_template("redefinir_senha.html", token_invalido=token_invalido, token=token)
 
 
 @auth_bp.route("/")

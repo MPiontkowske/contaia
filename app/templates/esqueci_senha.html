@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esqueci minha senha — ContaIA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #09090f; --surface: #111118; --surface-2: #18181f;
+      --border: rgba(255,255,255,.07); --gold: #d4a843; --gold-dim: rgba(212,168,67,.12);
+      --text: #e8e8e0; --text-dim: #888; --text-faint: #555;
+      --green: #22c55e; --green-dim: rgba(34,197,94,.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,.12);
+      --radius: 8px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .wrap { width: 100%; max-width: 420px; }
+    .brand { text-align: center; margin-bottom: 32px; }
+    .brand-name { font-size: 1.8rem; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+    .brand-name span { color: var(--gold); }
+    .brand-tagline { font-size: .85rem; color: var(--text-faint); margin-top: 5px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
+    .card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .card-sub { font-size: .83rem; color: var(--text-dim); margin-bottom: 24px; line-height: 1.55; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: .78rem; font-weight: 600; color: var(--text-dim); margin-bottom: 5px; }
+    .form-control { width: 100%; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 10px 13px; font-size: .9rem; font-family: var(--font); outline: none; transition: border-color .15s; }
+    .form-control:focus { border-color: var(--gold); }
+    .form-control::placeholder { color: var(--text-faint); }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 20px; background: var(--gold); color: #000; border: none; border-radius: var(--radius); font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .15s; margin-top: 8px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn:not(:disabled):hover { opacity: .88; }
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(0,0,0,.25); border-top-color: #000; border-radius: 50%; animation: spin .6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .alert { padding: 10px 14px; border-radius: var(--radius); font-size: .82rem; margin-bottom: 14px; display: none; }
+    .alert.show { display: block; }
+    .alert-error { background: var(--red-dim); border: 1px solid rgba(239,68,68,.25); color: #fca5a5; }
+    .alert-success { background: var(--green-dim); border: 1px solid rgba(34,197,94,.25); color: #86efac; }
+    .footer { text-align: center; margin-top: 20px; font-size: .82rem; color: var(--text-faint); }
+    .footer a { color: var(--gold); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">Conta<span>IA</span></div>
+    <div class="brand-tagline">Copiloto de IA para escritórios contábeis</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Esqueci minha senha</div>
+    <div class="card-sub">Informe seu e-mail e enviaremos um link para redefinir sua senha.</div>
+
+    <div class="alert alert-error" id="alert-error"></div>
+    <div class="alert alert-success" id="alert-success"></div>
+
+    <div id="form-area">
+      <div class="form-group">
+        <label class="form-label" for="email">E-mail</label>
+        <input class="form-control" type="email" id="email" placeholder="seu@email.com" autocomplete="email" autofocus>
+      </div>
+      <button class="btn" id="btn-enviar">
+        <span id="btn-text">Enviar link de redefinição</span>
+        <div class="spinner" id="spinner" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Lembrou a senha? <a href="/login">Entrar</a>
+  </div>
+</div>
+<script src="/static/js/esqueci_senha.js"></script>
+</body>
+</html>

@@ -654,6 +654,11 @@ async function deleteGen(id, el) {
     toast('Removido do histórico');
   }
 }
+
+// ── Exportar .docx ──
+function exportarDocx(id) {
+  window.open(`/api/exportar/${id}.docx`, '_blank');
+}
 </script>
 {% block extra_js %}{% endblock %}
 </body>

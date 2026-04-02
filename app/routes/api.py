@@ -1,6 +1,6 @@
 import json
 import logging
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, limiter
 from ..models import User, Generation, Template
@@ -181,6 +181,26 @@ def api_templates_delete(tmpl_id: int):
     db.session.delete(tmpl)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+# ── Exportar ─────────────────────────────────────────────────────────────────
+
+@api_bp.route("/exportar/<int:gen_id>.docx")
+@login_required
+def api_exportar_docx(gen_id: int):
+    user_id = session["user_id"]
+    gen = Generation.query.filter_by(id=gen_id, user_id=user_id).first_or_404()
+    try:
+        from ..services.exporter import generation_to_docx
+        conteudo = generation_to_docx(gen)
+    except ImportError:
+        return jsonify({"error": "python-docx não instalado no servidor."}), 500
+    filename = f"contaia_{gen.tool}_{gen.id}.docx"
+    return Response(
+        conteudo,
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ── Feedback ─────────────────────────────────────────────────────────────────
