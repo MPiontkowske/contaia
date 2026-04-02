@@ -13,11 +13,31 @@ def _maybe_send_trial_warning(user) -> None:
     days = user.trial_days_remaining
     if days is None or days > 2 or user.trial_warned_at is not None:
         return
-    # Marca antes de enviar para evitar reenvio em logins simultâneos
     user.trial_warned_at = datetime.utcnow()
     db.session.flush()
     from ..services.email import send_trial_expiry_warning
     send_trial_expiry_warning(user)
+
+
+def _maybe_send_subscription_warning(user) -> None:
+    """Dispara o e-mail D-7 antes do vencimento da assinatura, uma única vez por ciclo."""
+    days = user.subscription_days_remaining
+    if days is None or days > 7 or user.subscription_warned_at is not None:
+        return
+    user.subscription_warned_at = datetime.utcnow()
+    db.session.flush()
+    from ..services.email import send_subscription_expiry_warning
+    send_subscription_expiry_warning(user)
+
+
+def _auto_cancel_expired(user) -> None:
+    """Cancela automaticamente assinaturas vencidas."""
+    if (
+        user.plan == "active"
+        and user.subscription_end
+        and user.subscription_end < datetime.utcnow()
+    ):
+        user.plan = "cancelled"
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -39,7 +59,9 @@ def login():
         session["user_id"] = user.id
 
         user.last_login_at = datetime.utcnow()
+        _auto_cancel_expired(user)
         _maybe_send_trial_warning(user)
+        _maybe_send_subscription_warning(user)
         db.session.commit()
 
         return jsonify({"ok": True, "admin": user.is_admin})

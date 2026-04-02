@@ -45,11 +45,13 @@ class User(db.Model):
     trial_ends    = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=7))
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_login_at        = db.Column(db.DateTime)
-    trial_warned_at      = db.Column(db.DateTime)
-    reset_token          = db.Column(db.String(64), index=True)
-    reset_token_expires  = db.Column(db.DateTime)
-    is_admin             = db.Column(db.Boolean, default=False)
+    last_login_at           = db.Column(db.DateTime)
+    trial_warned_at         = db.Column(db.DateTime)
+    reset_token             = db.Column(db.String(64), index=True)
+    reset_token_expires     = db.Column(db.DateTime)
+    subscription_end        = db.Column(db.DateTime)   # quando a assinatura ativa expira
+    subscription_warned_at  = db.Column(db.DateTime)   # D-7 email enviado
+    is_admin                = db.Column(db.Boolean, default=False)
 
     # Perfil do contador — pré-preenchimento em formulários
     profile_nome      = db.Column(db.String(120))   # Nome do contador
@@ -67,7 +69,11 @@ class User(db.Model):
 
     @property
     def has_access(self):
-        if self.is_admin or self.plan == "active":
+        if self.is_admin:
+            return True
+        if self.plan == "active":
+            if self.subscription_end and self.subscription_end < datetime.utcnow():
+                return False
             return True
         if self.plan == "trial" and self.trial_ends and self.trial_ends > datetime.utcnow():
             return True
@@ -78,6 +84,13 @@ class User(db.Model):
         if self.plan != "trial" or not self.trial_ends:
             return None
         delta = self.trial_ends - datetime.utcnow()
+        return max(0, delta.days)
+
+    @property
+    def subscription_days_remaining(self):
+        if self.plan != "active" or not self.subscription_end:
+            return None
+        delta = self.subscription_end - datetime.utcnow()
         return max(0, delta.days)
 
     @property

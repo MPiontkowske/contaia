@@ -5,6 +5,8 @@ from ..extensions import db
 from ..models import User, Generation
 from ..decorators import admin_required
 
+_SUBSCRIPTION_DAYS = 30
+
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
@@ -32,6 +34,19 @@ def admin_dashboard():
     chart_dates  = [(inicio + timedelta(days=i)).isoformat() for i in range(28)]
     chart_data   = [cadastros_map.get(d, 0) for d in chart_dates]
 
+    # Assinaturas vencendo em até 7 dias
+    soon = datetime.utcnow() + timedelta(days=7)
+    expiring_soon = (
+        User.query
+        .filter(
+            User.plan == "active",
+            User.subscription_end.isnot(None),
+            User.subscription_end <= soon,
+        )
+        .order_by(User.subscription_end)
+        .all()
+    )
+
     return render_template(
         "admin.html",
         user=current_user,
@@ -42,6 +57,7 @@ def admin_dashboard():
         cancelled=cancelled_count,
         chart_labels=chart_labels,
         chart_data=chart_data,
+        expiring_soon=expiring_soon,
     )
 
 
@@ -53,6 +69,13 @@ def toggle_plan(user_id: int):
         return jsonify({"error": "Usuário não encontrado."}), 404
     if user.is_admin:
         return jsonify({"error": "Não é possível alterar plano do administrador."}), 400
-    user.plan = "active" if user.plan != "active" else "cancelled"
+    if user.plan != "active":
+        user.plan = "active"
+        user.subscription_end = datetime.utcnow() + timedelta(days=_SUBSCRIPTION_DAYS)
+        user.subscription_warned_at = None  # reset para próximo ciclo
+    else:
+        user.plan = "cancelled"
+        user.subscription_end = None
     db.session.commit()
-    return jsonify({"ok": True, "plan": user.plan})
+    sub_end = user.subscription_end.strftime("%d/%m/%Y") if user.subscription_end else None
+    return jsonify({"ok": True, "plan": user.plan, "subscription_end": sub_end})

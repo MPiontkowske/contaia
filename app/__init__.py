@@ -76,7 +76,7 @@ def _configure_security_headers(app: Flask) -> None:
         # Permite scripts inline (necessário para os templates da app)
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data:; "
             "font-src 'self' data:; "
@@ -98,10 +98,12 @@ def _run_migrations(app: Flask) -> None:
         ("user",       "profile_nome",       "ALTER TABLE user ADD COLUMN profile_nome VARCHAR(120)"),
         ("user",       "profile_escritorio", "ALTER TABLE user ADD COLUMN profile_escritorio VARCHAR(120)"),
         ("user",       "profile_cargo",      "ALTER TABLE user ADD COLUMN profile_cargo VARCHAR(80)"),
-        ("user",       "trial_warned_at",   "ALTER TABLE user ADD COLUMN trial_warned_at DATETIME"),
-        ("user",       "reset_token",       "ALTER TABLE user ADD COLUMN reset_token VARCHAR(64)"),
-        ("user",       "reset_token_expires","ALTER TABLE user ADD COLUMN reset_token_expires DATETIME"),
-        ("generation", "feedback",          "ALTER TABLE generation ADD COLUMN feedback BOOLEAN"),
+        ("user",       "trial_warned_at",        "ALTER TABLE user ADD COLUMN trial_warned_at DATETIME"),
+        ("user",       "reset_token",            "ALTER TABLE user ADD COLUMN reset_token VARCHAR(64)"),
+        ("user",       "reset_token_expires",    "ALTER TABLE user ADD COLUMN reset_token_expires DATETIME"),
+        ("user",       "subscription_end",       "ALTER TABLE user ADD COLUMN subscription_end DATETIME"),
+        ("user",       "subscription_warned_at", "ALTER TABLE user ADD COLUMN subscription_warned_at DATETIME"),
+        ("generation", "feedback",               "ALTER TABLE generation ADD COLUMN feedback BOOLEAN"),
     ]
 
     with db.engine.connect() as conn:

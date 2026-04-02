@@ -24,6 +24,15 @@
       <a href="/planos" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Ver planos</a>
     </div>
     {% endif %}
+  {% elif user.plan == 'active' and user.subscription_days_remaining is not none and user.subscription_days_remaining <= 7 %}
+  <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span>⚠ Sua assinatura vence em
+      {% set sd = user.subscription_days_remaining %}
+      {% if sd == 0 %}hoje{% elif sd == 1 %}amanhã{% else %}<strong>{{ sd }} dias</strong>{% endif %}
+      ({{ user.subscription_end.strftime('%d/%m/%Y') }}) — renove para não perder o acesso.
+    </span>
+    <a href="/planos" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Renovar</a>
+  </div>
   {% elif not user.has_access %}
   <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
     <span>🔒 Seu acesso expirou. Assine para continuar usando as ferramentas.</span>
@@ -51,6 +60,13 @@
       <div style="margin-top:8px; height:4px; background:var(--surface-3); border-radius:4px; overflow:hidden">
         <div style="height:100%; width:{{ ((7 - user.trial_days_remaining) / 7 * 100) | int }}%; background:var(--gold); border-radius:4px; transition:width .3s"></div>
       </div>
+    </div>
+    {% elif user.plan == 'active' and user.subscription_end %}
+    <div class="stat-card">
+      <div class="stat-value" style="font-size:1rem; color:{% if user.subscription_days_remaining <= 7 %}var(--gold){% else %}var(--green){% endif %}">
+        {{ user.subscription_end.strftime('%d/%m/%Y') }}
+      </div>
+      <div class="stat-label">Vencimento</div>
     </div>
     {% else %}
     <div class="stat-card">
