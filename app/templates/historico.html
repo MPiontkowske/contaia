@@ -25,6 +25,7 @@
     <a href="/historico?categoria=cobranca{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'cobranca' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">💼 Cobranças</a>
     <a href="/historico?categoria=relatorio{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'relatorio' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📊 Relatórios</a>
     <a href="/historico?categoria=receita{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'receita' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">🏛️ Receita Federal</a>
+    <a href="/historico?categoria=cliente{% if busca %}&q={{ busca }}{% endif %}" class="btn {% if categoria == 'cliente' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📨 Clientes</a>
   </div>
 
   {% if busca %}

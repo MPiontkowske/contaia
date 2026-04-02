@@ -61,3 +61,13 @@ def tool_receita():
     templates_json = _templates_for_category(user.id, "receita")
     return render_template("tool_receita.html", user=user, recentes=recentes,
                            templates_json=templates_json)
+
+
+@tools_bp.route("/ferramenta/cliente")
+@access_required
+def tool_cliente():
+    user = db.session.get(User, session["user_id"])
+    recentes = _recent_for_tool(user.id, "cliente")
+    templates_json = _templates_for_category(user.id, "cliente")
+    return render_template("tool_cliente.html", user=user, recentes=recentes,
+                           templates_json=templates_json)

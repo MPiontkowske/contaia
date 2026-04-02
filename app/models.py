@@ -16,6 +16,10 @@ TOOL_LABELS = {
     "receita_defesa": "Defesa / Impugnação",
     "receita_comunicar_cliente": "Comunicar Cliente",
     "receita_parcelamento": "Parcelamento Fiscal",
+    "cliente_documentos": "Solicitação de Documentos",
+    "cliente_obrigacoes": "Lembrete de Obrigação",
+    "cliente_abertura": "Abertura de Empresa",
+    "cliente_encerramento": "Encerramento / Alteração",
 }
 
 TOOL_CATEGORY = {
@@ -31,6 +35,10 @@ TOOL_CATEGORY = {
     "receita_defesa": "receita",
     "receita_comunicar_cliente": "receita",
     "receita_parcelamento": "receita",
+    "cliente_documentos": "cliente",
+    "cliente_obrigacoes": "cliente",
+    "cliente_abertura": "cliente",
+    "cliente_encerramento": "cliente",
 }
 
 

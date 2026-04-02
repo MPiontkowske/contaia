@@ -315,6 +315,106 @@ TOOLS: dict = {
 }
 
 
+    # ─── COMUNICAÇÃO COM CLIENTES ────────────────────────────────────────────────
+    "cliente_documentos": {
+        "label": "Solicitação de Documentos",
+        "category": "cliente",
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 600,
+        "system": (
+            "Você é um assistente de comunicação para escritórios contábeis brasileiros. "
+            "Redija e-mails profissionais e objetivos solicitando documentos a clientes. "
+            "Tom: cordial, organizado, sem burocracia desnecessária. "
+            "Liste os documentos de forma clara com marcadores. "
+            "Retorne APENAS o texto do e-mail, com Assunto: na primeira linha, "
+            "depois uma linha em branco, depois o corpo. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um e-mail solicitando documentos ao cliente.\n\n"
+            f"Cliente: {_s(c.get('cliente'))}\n"
+            f"Empresa do cliente: {_s(c.get('empresa'))}\n"
+            f"Finalidade: {_s(c.get('finalidade'))}\n"
+            f"Documentos necessários:\n{_s(c.get('documentos'))}\n"
+            f"Prazo para envio: {_s(c.get('prazo'))}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Tom: cordial, organizado. Explique brevemente o motivo da solicitação. "
+            f"Liste os documentos com marcadores. Máximo 10 linhas no corpo."
+        ),
+    },
+    "cliente_obrigacoes": {
+        "label": "Lembrete de Obrigação Fiscal",
+        "category": "cliente",
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 550,
+        "system": (
+            "Você é um assistente de comunicação para escritórios contábeis brasileiros. "
+            "Redija lembretes de obrigações fiscais e trabalhistas para clientes. "
+            "Tom: informativo, profissional, sem alarmismo desnecessário. "
+            "Deixe claro o prazo e a consequência do não-cumprimento de forma educativa. "
+            "Retorne APENAS o texto do e-mail, com Assunto: na primeira linha, "
+            "depois uma linha em branco, depois o corpo. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um e-mail de lembrete sobre obrigação fiscal/trabalhista.\n\n"
+            f"Cliente: {_s(c.get('cliente'))}\n"
+            f"Empresa do cliente: {_s(c.get('empresa'))}\n"
+            f"Obrigação: {_s(c.get('obrigacao'))}\n"
+            f"Prazo de entrega/pagamento: {_s(c.get('prazo'))}\n"
+            f"Penalidade por atraso: {_s(c.get('penalidade'), 'multa e juros conforme legislação')}\n"
+            f"Ação necessária do cliente: {_s(c.get('acao'), 'aguardar nosso contato')}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Tom: profissional e claro. Destaque a data-limite. Máximo 8 linhas no corpo."
+        ),
+    },
+    "cliente_abertura": {
+        "label": "Orientações para Abertura de Empresa",
+        "category": "cliente",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 1000,
+        "system": (
+            "Você é um contador consultor especializado em abertura de empresas no Brasil. "
+            "Redija orientações claras, em linguagem acessível, para clientes que desejam abrir uma empresa. "
+            "Cubra etapas principais, documentos necessários e próximos passos. "
+            "Tom: orientador, seguro, sem juridiquês excessivo. "
+            "Retorne APENAS o texto do e-mail/comunicado. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um comunicado orientando o cliente sobre abertura de empresa.\n\n"
+            f"Nome do futuro sócio/proprietário: {_s(c.get('cliente'))}\n"
+            f"Tipo de empresa / regime: {_s(c.get('tipo_empresa'))}\n"
+            f"Ramo de atividade: {_s(c.get('ramo'))}\n"
+            f"Observações específicas: {_s(c.get('observacoes'), 'nenhuma')}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Inclua: etapas do processo, documentos que o cliente deve providenciar, "
+            f"prazo estimado e próximos passos com o escritório."
+        ),
+    },
+    "cliente_encerramento": {
+        "label": "Encerramento / Alteração Societária",
+        "category": "cliente",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 900,
+        "system": (
+            "Você é um contador especializado em alterações societárias e encerramento de empresas no Brasil. "
+            "Redija comunicados claros sobre o processo de encerramento ou alteração, "
+            "orientando o cliente sobre etapas, documentos e obrigações pendentes. "
+            "Tom: profissional, empático (encerramento pode ser momento delicado), objetivo. "
+            "Retorne APENAS o texto do e-mail/comunicado. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um comunicado sobre encerramento ou alteração societária.\n\n"
+            f"Empresa: {_s(c.get('empresa'))}\n"
+            f"CNPJ: {_s(c.get('cnpj'))}\n"
+            f"Tipo de procedimento: {_s(c.get('tipo'))}\n"
+            f"Instruções e contexto: {_s(c.get('instrucoes'))}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Inclua: etapas do processo, documentos necessários, obrigações a cumprir antes do encerramento/alteração, "
+            f"prazo estimado e próximos passos."
+        ),
+    },
+}
+
+
 def get_tool_config(tool_key: str) -> dict | None:
     return TOOLS.get(tool_key)
 

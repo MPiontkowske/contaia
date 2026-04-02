@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% block title %}Comunicação com Clientes — ContaIA{% endblock %}
+
+{% block extra_head %}
+<style>
+.template-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:14px; }
+.template-bar select { flex:1; background:transparent; border:none; color:var(--text-dim); font-size:.82rem; outline:none; cursor:pointer; }
+.template-bar select option { background:var(--surface-2); }
+.save-tmpl-form { display:none; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-top:10px; }
+.save-tmpl-form .inner { display:flex; gap:8px; }
+.feedback-row { display:none; align-items:center; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.feedback-row span { font-size:.78rem; color:var(--text-faint); }
+.btn-feedback { background:transparent; border:1px solid var(--border); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:.9rem; color:var(--text-dim); transition:background .15s, border-color .15s; }
+.btn-feedback:hover { background:var(--surface-3); border-color:var(--border-2); }
+.btn-feedback.selected-pos { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+.btn-feedback.selected-neg { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">📨 Comunicação com Clientes</div>
+  <div class="page-subtitle">Documente pedidos, lembretes e orientações com linguagem profissional.</div>
+</div>
+
+<div class="page-body">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start">
+
+  <!-- Coluna esquerda: formulário -->
+  <div>
+    <div class="card">
+
+      <!-- Seletor de templates -->
+      <div class="template-bar" id="template-bar">
+        <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
+        <select id="template-select" onchange="loadTemplate(this.value)">
+          <option value="">— Formulário em branco —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="btn-del-tmpl" onclick="deleteTemplate()" style="display:none" title="Remover template">✕</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="0">Documentos</button>
+        <button class="tab-btn" data-tab="1">Obrigações</button>
+        <button class="tab-btn" data-tab="2">Abertura</button>
+        <button class="tab-btn" data-tab="3">Encerramento</button>
+      </div>
+
+      <!-- Tab 0: Solicitação de Documentos -->
+      <div class="tab-pane active" id="tab-0">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t0-cliente" placeholder="Ex: João Silva"></div>
+          <div class="form-group"><label class="form-label">Empresa do cliente</label><input class="form-control" id="t0-empresa" placeholder="Ex: Padaria do João Ltda"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Finalidade</label>
+          <select class="form-control" id="t0-finalidade">
+            <option value="Declaração de Imposto de Renda Pessoa Física (IRPF)">Declaração IRPF</option>
+            <option value="Apuração do Simples Nacional">Simples Nacional</option>
+            <option value="Elaboração do Balanço Patrimonial">Balanço Patrimonial</option>
+            <option value="Declaração de Imposto de Renda Pessoa Jurídica (IRPJ)">Declaração IRPJ</option>
+            <option value="Regularização cadastral junto à Receita Federal">Regularização Cadastral</option>
+            <option value="Renovação contratual">Renovação Contratual</option>
+            <option value="outro">Outro (especificar abaixo)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Documentos necessários</label>
+          <textarea class="form-control" id="t0-documentos" rows="4" placeholder="Liste os documentos, um por linha. Ex:&#10;- RG e CPF do sócio&#10;- Extrato bancário dos últimos 12 meses&#10;- Notas fiscais de compra e venda"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Prazo para envio</label><input class="form-control" id="t0-prazo" placeholder="Ex: 15/03/2025"></div>
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t0-contador" placeholder="Ex: Carlos Souza"></div>
+        </div>
+      </div>
+
+      <!-- Tab 1: Lembrete de Obrigação -->
+      <div class="tab-pane" id="tab-1">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t1-cliente" placeholder="Ex: João Silva"></div>
+          <div class="form-group"><label class="form-label">Empresa do cliente</label><input class="form-control" id="t1-empresa" placeholder="Ex: Padaria do João Ltda"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Obrigação fiscal / trabalhista</label>
+          <select class="form-control" id="t1-obrigacao">
+            <option value="DCTF — Declaração de Débitos e Créditos Tributários Federais">DCTF</option>
+            <option value="SPED Fiscal (EFD ICMS/IPI)">SPED Fiscal</option>
+            <option value="SPED Contribuições (EFD-Contribuições)">SPED Contribuições</option>
+            <option value="ECD — Escrituração Contábil Digital">ECD</option>
+            <option value="ECF — Escrituração Contábil Fiscal">ECF</option>
+            <option value="GFIP / SEFIP — recolhimento FGTS e informações à Previdência">GFIP / SEFIP</option>
+            <option value="eSocial — eventos periódicos e fechamento de folha">eSocial</option>
+            <option value="DEFIS — Declaração de Informações do Simples Nacional">DEFIS</option>
+            <option value="DAE / Simples Nacional — guia de pagamento mensal">DAE / Simples Nacional</option>
+            <option value="PGDAS-D — apuração mensal do Simples Nacional">PGDAS-D</option>
+            <option value="DIRF — Declaração do Imposto sobre a Renda Retido na Fonte">DIRF</option>
+            <option value="outro">Outro (especificar abaixo)</option>
+          </select>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Prazo</label><input class="form-control" id="t1-prazo" placeholder="Ex: 20/03/2025"></div>
+          <div class="form-group"><label class="form-label">Penalidade por atraso</label><input class="form-control" id="t1-penalidade" placeholder="Ex: multa de 2% + juros Selic"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Ação necessária do cliente</label><input class="form-control" id="t1-acao" placeholder="Ex: enviar faturamento até dia 15"></div>
+          <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t1-contador" placeholder="Ex: Carlos Souza"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Abertura de Empresa -->
+      <div class="tab-pane" id="tab-2">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Nome do futuro sócio</label><input class="form-control" id="t2-cliente" placeholder="Ex: Maria Oliveira"></div>
+          <div class="form-group"><label class="form-label">Ramo de atividade</label><input class="form-control" id="t2-ramo" placeholder="Ex: Consultoria em TI, Comércio de alimentos"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Tipo de empresa / regime tributário</label>
+          <select class="form-control" id="t2-tipo_empresa">
+            <option value="MEI — Microempreendedor Individual">MEI</option>
+            <option value="ME — Microempresa no Simples Nacional">ME / Simples Nacional</option>
+            <option value="EPP — Empresa de Pequeno Porte no Simples Nacional">EPP / Simples Nacional</option>
+            <option value="Sociedade Limitada (Ltda) — Lucro Presumido">Ltda / Lucro Presumido</option>
+            <option value="Sociedade Limitada (Ltda) — Lucro Real">Ltda / Lucro Real</option>
+            <option value="Sociedade Unipessoal (SLU)">SLU — Sociedade Unipessoal</option>
+            <option value="Sociedade Simples">Sociedade Simples (profissional liberal)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Observações específicas</label>
+          <textarea class="form-control" id="t2-observacoes" rows="3" placeholder="Ex: Atividade com inscrição estadual? Sócios estrangeiros? Capital social definido?"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t2-contador" placeholder="Ex: Carlos Souza"></div>
+      </div>
+
+      <!-- Tab 3: Encerramento / Alteração -->
+      <div class="tab-pane" id="tab-3">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t3-empresa" placeholder="Ex: Padaria do João Ltda"></div>
+          <div class="form-group"><label class="form-label">CNPJ</label><input class="form-control" id="t3-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Tipo de procedimento</label>
+          <select class="form-control" id="t3-tipo">
+            <option value="Encerramento (baixa) da empresa">Encerramento / Baixa</option>
+            <option value="Alteração de quadro societário (entrada ou saída de sócio)">Alteração de quadro societário</option>
+            <option value="Alteração do objeto social (mudança de atividade)">Mudança de atividade</option>
+            <option value="Transferência de titularidade (venda da empresa)">Transferência de titularidade</option>
+            <option value="Mudança de endereço (sede)">Mudança de endereço</option>
+            <option value="Mudança de regime tributário">Mudança de regime tributário</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Contexto / instruções específicas</label>
+          <textarea class="form-control" id="t3-instrucoes" rows="3" placeholder="Ex: Empresa com débitos em aberto, sócio saindo com quitação, prazo urgente…"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t3-contador" placeholder="Ex: Carlos Souza"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
+        <span id="btn-text">Gerar texto</span>
+        <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
+      </button>
+
+      <!-- Salvar como template (inline) -->
+      <div class="save-tmpl-form" id="save-tmpl-form">
+        <div style="font-size:.75rem; color:var(--text-faint); margin-bottom:6px">Salvar campos atuais como template:</div>
+        <div class="inner">
+          <input class="form-control" id="tmpl-nome" placeholder="Ex: Documentos IRPF — João Silva" style="font-size:.83rem">
+          <button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-tmpl-form').style.display='none'">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna direita: resultado + histórico -->
+  <div style="display:flex; flex-direction:column; gap:16px">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:0">Resultado</div>
+        <div id="result-actions" style="display:none; gap:8px; flex-wrap:wrap; margin-top:0" class="result-actions">
+          <button class="btn btn-outline btn-sm" onclick="copiarResultado()">⎘ Copiar</button>
+          <button class="btn btn-outline btn-sm" id="btn-fav" onclick="favoritarAtual()">☆ Favoritar</button>
+          <button class="btn btn-outline btn-sm" onclick="if(currentGenId) exportarDocx(currentGenId)">⬇ .docx</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleSaveTmpl()">💾 Template</button>
+        </div>
+      </div>
+      <div id="result-box" class="result-box">
+        <div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>Gerar texto</strong>.</div>
+      </div>
+      <div class="feedback-row" id="feedback-row">
+        <span>Foi útil?</span>
+        <button class="btn-feedback" id="btn-like" onclick="enviarFeedback(true)">👍</button>
+        <button class="btn-feedback" id="btn-dislike" onclick="enviarFeedback(false)">👎</button>
+        <span id="feedback-obg" style="display:none; font-size:.75rem; color:var(--green)">Obrigado pelo feedback!</span>
+      </div>
+    </div>
+
+    {% if recentes %}
+    <div class="card">
+      <div class="card-title">Gerações anteriores</div>
+      <div class="history-list">
+        {% for g in recentes %}
+        <div class="history-item {% if g.is_favorite %}favorited{% endif %}" id="gen-{{ g.id }}">
+          <div class="history-item-meta">
+            <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+            <span class="history-item-date">{{ g.created_at.strftime('%d/%m') }}</span>
+          </div>
+          <div class="history-item-preview">{{ g.resultado_preview }}</div>
+          <div class="history-item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleFavorite({{ g.id }}, this)">{{ '★' if g.is_favorite else '☆' }}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="deleteGen({{ g.id }}, this)">✕</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</div>
+
+<script>
+const TOOL_KEYS = ['cliente_documentos','cliente_obrigacoes','cliente_abertura','cliente_encerramento'];
+const PROFILE = {
+  nome:       {{ (user.profile_nome or user.name or '') | tojson }},
+  escritorio: {{ (user.profile_escritorio or '') | tojson }},
+};
+const TEMPLATES_DATA = {{ templates_json | safe }};
+
+let activeTab = 0;
+let currentGenId = null;
+
+(function initTemplates() {
+  const sel = document.getElementById('template-select');
+  TEMPLATES_DATA.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.nome;
+    opt.dataset.tool = t.tool;
+    opt.dataset.campos = JSON.stringify(t.campos);
+    sel.appendChild(opt);
+  });
+  if (TEMPLATES_DATA.length === 0) document.getElementById('template-bar').style.opacity = '.5';
+})();
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[id$="-contador"]').forEach(el => {
+    if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
+  });
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = parseInt(btn.dataset.tab);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + t).classList.add('active');
+    activeTab = t;
+    resetResult();
+    document.getElementById('tab-' + t).querySelectorAll('[id$="-contador"]').forEach(el => {
+      if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
+    });
+  });
+});
+
+function resetResult() {
+  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>Gerar texto</strong>.</div>';
+  document.getElementById('result-actions').style.display = 'none';
+  document.getElementById('feedback-row').style.display = 'none';
+  document.getElementById('save-tmpl-form').style.display = 'none';
+  currentGenId = null;
+}
+
+function loadTemplate(id) {
+  const delBtn = document.getElementById('btn-del-tmpl');
+  if (!id) { delBtn.style.display = 'none'; return; }
+  const opt = document.querySelector(`#template-select option[value="${id}"]`);
+  if (!opt) return;
+  const campos = JSON.parse(opt.dataset.campos || '{}');
+  const toolKey = opt.dataset.tool || '';
+  const tabIdx = TOOL_KEYS.indexOf(toolKey);
+  if (tabIdx >= 0 && tabIdx !== activeTab) {
+    document.querySelectorAll('.tab-btn')[tabIdx].click();
+  }
+  Object.entries(campos).forEach(([key, value]) => {
+    const el = document.getElementById('t' + activeTab + '-' + key);
+    if (el) el.value = value;
+  });
+  delBtn.style.display = 'inline-flex';
+  toast('Template carregado');
+}
+
+async function deleteTemplate() {
+  const sel = document.getElementById('template-select');
+  const id = sel.value;
+  if (!id || !confirm('Remover este template?')) return;
+  const data = await api(`/api/templates/${id}`, null, 'DELETE');
+  if (data.ok) {
+    sel.querySelector(`option[value="${id}"]`).remove();
+    sel.value = '';
+    document.getElementById('btn-del-tmpl').style.display = 'none';
+    toast('Template removido');
+    if (sel.options.length <= 1) document.getElementById('template-bar').style.opacity = '.5';
+  }
+}
+
+function getCampos() {
+  const p = 't' + activeTab + '-';
+  const campos = {};
+  document.querySelectorAll('#tab-' + activeTab + ' .form-control').forEach(el => {
+    campos[el.id.replace(p, '')] = el.value.trim();
+  });
+  return campos;
+}
+
+async function gerar() {
+  const btn = document.getElementById('btn-gerar');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  const box = document.getElementById('result-box');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Gerando…';
+  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando texto…</div>';
+  document.getElementById('feedback-row').style.display = 'none';
+
+  try {
+    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
+    if (data.resultado) {
+      box.textContent = data.resultado;
+      currentGenId = data.id || null;
+      document.getElementById('result-actions').style.display = 'flex';
+      document.getElementById('feedback-row').style.display = 'flex';
+      resetFeedbackUI();
+    } else {
+      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar. Tente novamente.'}</div>`;
+    }
+  } catch {
+    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão. Tente novamente.</div>';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Gerar texto';
+  }
+}
+
+function copiarResultado() {
+  const txt = document.getElementById('result-box').textContent;
+  if (txt) copyText(txt);
+}
+
+async function favoritarAtual() {
+  if (!currentGenId) return;
+  const btn = document.getElementById('btn-fav');
+  const data = await api(`/api/favoritar/${currentGenId}`);
+  if (data.ok) {
+    btn.textContent = data.is_favorite ? '★ Favoritado' : '☆ Favoritar';
+    toast(data.is_favorite ? 'Adicionado aos favoritos' : 'Removido dos favoritos');
+  }
+}
+
+function toggleSaveTmpl() {
+  const f = document.getElementById('save-tmpl-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block') document.getElementById('tmpl-nome').focus();
+}
+
+async function salvarTemplate() {
+  const nome = document.getElementById('tmpl-nome').value.trim();
+  if (!nome) { toast('Digite um nome para o template', 'error'); return; }
+  const data = await api('/api/templates', {
+    tool: TOOL_KEYS[activeTab],
+    nome,
+    campos: getCampos(),
+  });
+  if (data.ok) {
+    const sel = document.getElementById('template-select');
+    const opt = document.createElement('option');
+    opt.value = data.id;
+    opt.textContent = data.nome;
+    opt.dataset.tool = TOOL_KEYS[activeTab];
+    opt.dataset.campos = JSON.stringify(getCampos());
+    sel.appendChild(opt);
+    document.getElementById('save-tmpl-form').style.display = 'none';
+    document.getElementById('tmpl-nome').value = '';
+    document.getElementById('template-bar').style.opacity = '1';
+    toast('Template salvo!');
+  } else {
+    toast(data.error || 'Erro ao salvar template', 'error');
+  }
+}
+
+function resetFeedbackUI() {
+  document.getElementById('btn-like').className = 'btn-feedback';
+  document.getElementById('btn-dislike').className = 'btn-feedback';
+  document.getElementById('feedback-obg').style.display = 'none';
+}
+
+async function enviarFeedback(value) {
+  if (!currentGenId) return;
+  const data = await api(`/api/feedback/${currentGenId}`, { value });
+  if (data.ok) {
+    document.getElementById('btn-like').className = 'btn-feedback' + (value ? ' selected-pos' : '');
+    document.getElementById('btn-dislike').className = 'btn-feedback' + (!value ? ' selected-neg' : '');
+    document.getElementById('feedback-obg').style.display = 'inline';
+  }
+}
+</script>
+{% endblock %}
