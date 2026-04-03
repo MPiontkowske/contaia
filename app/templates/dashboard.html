@@ -99,6 +99,29 @@
     </div>
   </div>
 
+  <!-- Atividade pessoal -->
+  {% if total > 0 %}
+  <div style="margin-bottom:28px">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+      <div style="font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint)">Sua atividade — 14 dias</div>
+      <div style="display:flex; gap:12px; font-size:.75rem; color:var(--text-faint)">
+        {% for cat, label, color in [('cobranca','Cobranças','#d4a843'),('relatorio','Relatórios','#60a5fa'),('receita','Receita Fed.','#f87171'),('cliente','Clientes','#60a5fa')] %}
+        {% if cat_totals[cat] > 0 %}
+        <span>
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:
+            {% if cat == 'cobranca' %}#d4a843{% elif cat == 'relatorio' %}#60a5fa{% elif cat == 'receita' %}#f87171{% else %}#a78bfa{% endif %};margin-right:4px"></span>
+          {{ label }} <strong>{{ cat_totals[cat] }}</strong>
+        </span>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card" style="padding:16px 18px">
+      <canvas id="ativ-chart" height="70"></canvas>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Ferramentas -->
   <div style="margin-bottom:10px; font-size:.78rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint)">Ferramentas</div>
   <div class="tool-grid" style="margin-bottom:32px">
@@ -184,6 +207,43 @@
   {% endif %}
 
 </div>
+
+{% block extra_js %}
+{% if total > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const labels = {{ ativ_labels | tojson }};
+  const data   = {{ ativ_data | tojson }};
+  const ctx = document.getElementById('ativ-chart');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: data.map(v => v > 0 ? 'rgba(212,168,67,.7)' : 'rgba(255,255,255,.05)'),
+        borderColor:     data.map(v => v > 0 ? '#d4a843' : 'transparent'),
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => `${ctx.raw} geraç${ctx.raw === 1 ? 'ão' : 'ões'}` }
+      }},
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#6b7280', font: { size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#6b7280', font: { size: 10 }, stepSize: 1 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
 
 {% if not user.onboarded_at and not user.is_admin %}
 <!-- ── Modal de onboarding ── -->

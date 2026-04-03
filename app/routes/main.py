@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request
-from datetime import datetime
+from datetime import datetime, timedelta
 from ..extensions import db
-from ..models import User, Generation
+from ..models import User, Generation, TOOL_CATEGORY
 from ..decorators import login_required
 
 main_bp = Blueprint("main", __name__)
@@ -11,6 +11,7 @@ main_bp = Blueprint("main", __name__)
 @login_required
 def dashboard():
     from flask import current_app
+    from sqlalchemy import func
     user = db.session.get(User, session["user_id"])
     recentes = (
         Generation.query
@@ -22,6 +23,34 @@ def dashboard():
     total = Generation.query.filter_by(user_id=user.id).count()
     favoritos = Generation.query.filter_by(user_id=user.id, is_favorite=True).count()
     trial_limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
+
+    # Atividade dos últimos 14 dias
+    hoje = datetime.utcnow().date()
+    inicio = hoje - timedelta(days=13)
+    rows = (
+        db.session.query(func.date(Generation.created_at), func.count(Generation.id))
+        .filter(Generation.user_id == user.id, Generation.created_at >= inicio)
+        .group_by(func.date(Generation.created_at))
+        .all()
+    )
+    ativ_map = {str(r[0]): r[1] for r in rows}
+    ativ_labels = [(inicio + timedelta(days=i)).strftime("%d/%m") for i in range(14)]
+    ativ_dates  = [(inicio + timedelta(days=i)).isoformat() for i in range(14)]
+    ativ_data   = [ativ_map.get(d, 0) for d in ativ_dates]
+
+    # Breakdown por categoria
+    cat_rows = (
+        db.session.query(Generation.tool, func.count(Generation.id))
+        .filter_by(user_id=user.id)
+        .group_by(Generation.tool)
+        .all()
+    )
+    cat_totals = {"cobranca": 0, "relatorio": 0, "receita": 0, "cliente": 0}
+    for tool, cnt in cat_rows:
+        cat = TOOL_CATEGORY.get(tool, "")
+        if cat in cat_totals:
+            cat_totals[cat] += cnt
+
     return render_template(
         "dashboard.html",
         user=user,
@@ -29,6 +58,9 @@ def dashboard():
         total=total,
         favoritos=favoritos,
         trial_limit=trial_limit,
+        ativ_labels=ativ_labels,
+        ativ_data=ativ_data,
+        cat_totals=cat_totals,
     )
 
 
