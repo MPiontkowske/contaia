@@ -2,7 +2,7 @@ import os
 import logging
 from flask import Flask
 from .config import config_map
-from .extensions import db, limiter, mail
+from .extensions import db, migrate, limiter, mail
 
 
 def _init_sentry(dsn: str | None) -> None:
@@ -41,6 +41,7 @@ def create_app(env: str | None = None) -> Flask:
     _configure_security_headers(app)
 
     db.init_app(app)
+    migrate.init_app(app, db)
     limiter.init_app(app)
     mail.init_app(app)
 
@@ -48,10 +49,13 @@ def create_app(env: str | None = None) -> Flask:
     register_blueprints(app)
 
     with app.app_context():
-        # Ordem importa: create_all primeiro, migrate colunas, depois seed admin
         from .extensions import db as _db
-        _db.create_all()
-        _run_migrations(app)
+        is_sqlite = _db.engine.dialect.name == "sqlite"
+        if is_sqlite:
+            # Dev: cria tabelas e aplica colunas novas via PRAGMA
+            _db.create_all()
+            _run_migrations(app)
+        # PostgreSQL: schema gerenciado pelo Alembic (flask db upgrade)
         _init_db(app)
 
     return app
