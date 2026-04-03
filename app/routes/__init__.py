@@ -4,6 +4,7 @@ from .tools import tools_bp
 from .api import api_bp
 from .admin import admin_bp
 from .pagarme import pagarme_bp
+from .health import health_bp
 
 
 def register_blueprints(app):
@@ -13,3 +14,4 @@ def register_blueprints(app):
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(pagarme_bp)
+    app.register_blueprint(health_bp)
