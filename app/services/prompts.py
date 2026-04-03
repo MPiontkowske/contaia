@@ -419,75 +419,180 @@ TOOLS: dict = {
         "label": "Checklist de Obrigações Mensais",
         "category": "fiscal",
         "model": "claude-sonnet-4-6",
-        "max_tokens": 1200,
+        "max_tokens": 1800,
         "system": (
-            "Você é um contador especialista em obrigações fiscais brasileiras. "
-            "Gere checklists detalhados e precisos de obrigações mensais conforme o regime tributário. "
-            "Inclua prazos, órgãos responsáveis e penalidades por descumprimento. "
-            "Formate como lista clara com seções por tipo de obrigação (federal, estadual, municipal, trabalhista). "
-            "Retorne APENAS o checklist formatado. Sem introduções ou explicações adicionais."
+            "Você é um contador sênior especialista em obrigações fiscais e trabalhistas brasileiras, "
+            "com profundo conhecimento da legislação tributária federal, estadual e municipal. "
+            "Gere checklists COMPLETOS, PRECISOS e ACIONÁVEIS para escritórios de contabilidade. "
+            "REGRAS DE FORMATAÇÃO:\n"
+            "- Use seções bem definidas: ## FEDERAL, ## ESTADUAL, ## MUNICIPAL, ## TRABALHISTA/PREVIDENCIÁRIO\n"
+            "- Cada item: [ ] Obrigação | Prazo | Penalidade por atraso | Observação\n"
+            "- Cite os prazos reais conforme legislação vigente (ex: DARF até o 20º dia útil, DAS até dia 20)\n"
+            "- Inclua guias de recolhimento específicos (DARF, DAS, GPS, DAM, FGTS Digital)\n"
+            "- Para empresas com funcionários, sempre inclua eSocial, FGTS Digital e GPS\n"
+            "- Ao final, adicione seção '## ATENÇÃO NO MÊS' com alertas específicos do período\n"
+            "Retorne APENAS o checklist. Sem introduções ou conclusões."
         ),
         "build_user": lambda c: (
-            f"Gere um checklist de obrigações mensais para o mês de {_s(c.get('competencia'))}.\n\n"
-            f"Empresa: {_s(c.get('empresa'))}\n"
+            f"Gere o checklist completo de obrigações para a competência {_s(c.get('competencia'))}.\n\n"
+            f"DADOS DA EMPRESA:\n"
+            f"Razão social: {_s(c.get('empresa'))}\n"
             f"Regime tributário: {_s(c.get('regime'))}\n"
-            f"Porte / tipo: {_s(c.get('porte'), 'não informado')}\n"
-            f"Atividade principal: {_s(c.get('atividade'), 'não informada')}\n"
-            f"Possui funcionários: {_s(c.get('funcionarios'), 'não informado')}\n"
+            f"Porte: {_s(c.get('porte'), 'não informado')}\n"
+            f"Atividade principal (CNAE): {_s(c.get('atividade'), 'não informada')}\n"
+            f"Possui funcionários CLT: {_s(c.get('funcionarios'), 'não informado')}\n"
+            f"Estado/Município de operação: {_s(c.get('municipio'), 'não informado')}\n"
             f"Observações específicas: {_s(c.get('observacoes'), 'nenhuma')}\n\n"
-            f"Inclua prazos, valores de multa por atraso quando aplicável, "
-            f"e uma coluna de status (A fazer / Entregue)."
+            f"Priorize precisão nos prazos. Para o Simples Nacional, inclua DAS, PGDAS-D e DEFIS quando aplicável. "
+            f"Para Lucro Presumido/Real, inclua DARF de PIS, COFINS, CSLL, IRPJ, além de obrigações acessórias "
+            f"(SPED, EFD, ECF conforme periodicidade). "
+            f"Indique claramente quais obrigações dependem de movimentação no mês."
         ),
     },
     "fiscal_declaracao": {
         "label": "Guia de Declaração ao Cliente",
         "category": "fiscal",
         "model": "claude-sonnet-4-6",
-        "max_tokens": 1000,
+        "max_tokens": 1400,
         "system": (
-            "Você é um contador consultor especializado em declarações fiscais brasileiras. "
-            "Redija guias de orientação para clientes sobre declarações (IRPF, IRPJ, DEFIS, DASN-SIMEI, etc.), "
-            "em linguagem clara e acessível. "
-            "Tom: didático, sem juridiquês, tranquilizador. "
-            "Retorne APENAS o texto do comunicado/guia. Sem explicações adicionais."
+            "Você é um contador consultor especializado em declarações fiscais brasileiras, "
+            "com domínio completo da legislação do IR, Simples Nacional, MEI e obrigações acessórias. "
+            "Redija comunicados de orientação que transformem obrigações complexas em linguagem simples e clara. "
+            "ESTRUTURA OBRIGATÓRIA:\n"
+            "1. Saudação personalizada\n"
+            "2. O que é esta declaração e por que é importante (1 parágrafo objetivo)\n"
+            "3. Lista numerada dos documentos necessários (específica para o perfil do cliente)\n"
+            "4. Prazo e consequências do atraso (multa mínima R$ 165,74 para IRPF, ou % sobre imposto)\n"
+            "5. Como será o processo com o escritório (etapas claras)\n"
+            "6. Call-to-action: o que o cliente deve fazer agora\n"
+            "7. Assinatura profissional\n"
+            "Tom: consultivo, seguro, sem juridiquês. O cliente deve sair informado e tranquilo, não assustado. "
+            "Retorne APENAS o comunicado. Sem notas ou explicações adicionais."
         ),
         "build_user": lambda c: (
-            f"Redija um guia de orientação ao cliente sobre declaração fiscal.\n\n"
+            f"Redija o guia de orientação sobre declaração fiscal para o cliente.\n\n"
+            f"DADOS:\n"
             f"Cliente: {_s(c.get('cliente'))}\n"
             f"Tipo de declaração: {_s(c.get('declaracao'))}\n"
             f"Ano-calendário / exercício: {_s(c.get('exercicio'))}\n"
             f"Prazo de entrega: {_s(c.get('prazo'))}\n"
-            f"Documentos necessários: {_s(c.get('documentos'), 'padrão conforme tipo')}\n"
-            f"Pontos de atenção específicos: {_s(c.get('atencao'), 'nenhum')}\n"
+            f"Documentos que o cliente precisa providenciar: {_s(c.get('documentos'), 'padrão conforme o tipo de declaração')}\n"
+            f"Pontos de atenção / situações especiais: {_s(c.get('atencao'), 'nenhum')}\n"
             f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
-            f"Inclua: o que é a declaração, por que é importante, "
-            f"documentos que o cliente precisa providenciar, prazo e próximos passos."
+            f"Seja específico sobre documentos — liste-os de forma numerada e clara. "
+            f"Mencione a multa por atraso relevante para este tipo de declaração. "
+            f"Se houver pontos de atenção, destaque-os com linguagem clara mas sem alarmar."
         ),
     },
     "fiscal_mudanca_regime": {
         "label": "Comunicado de Mudança de Regime",
         "category": "fiscal",
         "model": "claude-sonnet-4-6",
-        "max_tokens": 900,
+        "max_tokens": 1200,
         "system": (
-            "Você é um contador especialista em planejamento tributário brasileiro. "
-            "Redija comunicados sobre mudança de regime tributário de forma clara e estratégica. "
-            "Explique os impactos práticos, vantagens e próximos passos. "
-            "Tom: consultivo, seguro, sem alarmismo. "
-            "Retorne APENAS o texto do comunicado. Sem explicações adicionais."
+            "Você é um contador especialista em planejamento tributário brasileiro, "
+            "com conhecimento aprofundado do Simples Nacional (LC 123/2006), Lucro Presumido e Lucro Real (Lei 9.718/98). "
+            "Redija comunicados de mudança de regime que demonstrem competência técnica e transmitam confiança ao cliente. "
+            "ESTRUTURA OBRIGATÓRIA:\n"
+            "1. Saudação e contexto da mudança\n"
+            "2. Por que estamos recomendando esta mudança (justificativa técnica simplificada)\n"
+            "3. O que muda na prática (tabela ou lista comparativa: regime atual vs. novo)\n"
+            "4. Impacto financeiro estimado (se fornecido)\n"
+            "5. Novas obrigações acessórias do regime destino\n"
+            "6. Linha do tempo e ações necessárias do cliente\n"
+            "7. Disponibilidade para esclarecimentos + assinatura\n"
+            "Tom: consultivo de alto nível — o cliente deve sentir que tem um parceiro estratégico, não apenas um prestador de serviço. "
+            "Retorne APENAS o comunicado. Sem notas adicionais."
         ),
         "build_user": lambda c: (
-            f"Redija um comunicado sobre mudança de regime tributário.\n\n"
-            f"Empresa: {_s(c.get('empresa'))}\n"
+            f"Redija o comunicado de mudança de regime tributário.\n\n"
+            f"DADOS DA EMPRESA:\n"
+            f"Razão social: {_s(c.get('empresa'))}\n"
             f"CNPJ: {_s(c.get('cnpj'), 'não informado')}\n"
             f"Regime atual: {_s(c.get('regime_atual'))}\n"
             f"Novo regime: {_s(c.get('regime_novo'))}\n"
-            f"Vigência da mudança: {_s(c.get('vigencia'))}\n"
-            f"Motivo / justificativa: {_s(c.get('motivo'))}\n"
-            f"Impacto estimado: {_s(c.get('impacto'), 'a ser detalhado')}\n"
+            f"Vigência: {_s(c.get('vigencia'))}\n"
+            f"Motivo técnico da mudança: {_s(c.get('motivo'))}\n"
+            f"Impacto estimado na carga tributária: {_s(c.get('impacto'), 'não calculado')}\n"
             f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
-            f"Inclua: o que muda na prática, benefícios esperados, "
-            f"obrigações do novo regime e ações que o cliente deve tomar."
+            f"Seja específico sobre as obrigações que mudam (ex: se vai para Lucro Presumido, mencione SPED, EFD-Contribuições, "
+            f"DARF mensais de PIS/COFINS/CSLL/IRPJ). "
+            f"Se houver impacto estimado, contextualize-o de forma positiva."
+        ),
+    },
+    "fiscal_planejamento": {
+        "label": "Planejamento Tributário",
+        "category": "fiscal",
+        "model": "claude-opus-4-6",
+        "max_tokens": 2000,
+        "system": (
+            "Você é um especialista sênior em planejamento tributário brasileiro, com domínio completo de "
+            "Simples Nacional (LC 123/2006, Anexos I–V), Lucro Presumido (presunção por atividade: 8%, 16%, 32%), "
+            "e Lucro Real (IRPJ 15% + adicional 10% s/ lucro > R$20k/mês, CSLL 9%). "
+            "Elabore análises comparativas rigorosas entre regimes tributários. "
+            "ESTRUTURA OBRIGATÓRIA:\n"
+            "## 1. DIAGNÓSTICO DA EMPRESA\n"
+            "## 2. SIMULAÇÃO COMPARATIVA (tabela com carga estimada por regime)\n"
+            "## 3. ANÁLISE DE CADA REGIME (vantagens, desvantagens, riscos, obrigações acessórias)\n"
+            "## 4. RECOMENDAÇÃO FUNDAMENTADA\n"
+            "## 5. PRÓXIMOS PASSOS E PRAZO DE OPÇÃO\n"
+            "Use valores numéricos sempre que possível. Cite os prazos de opção (Simples: até 31/jan; Lucro: início do ano). "
+            "Destaque pontos de risco (ex: sublimites Simples, segregação de receitas, distribuição de lucros). "
+            "Retorne APENAS a análise formatada. Sem introduções."
+        ),
+        "build_user": lambda c: (
+            f"Elabore a análise de planejamento tributário para a empresa abaixo.\n\n"
+            f"DADOS DA EMPRESA:\n"
+            f"Razão social: {_s(c.get('empresa'))}\n"
+            f"Atividade principal (CNAE): {_s(c.get('atividade'))}\n"
+            f"Faturamento anual estimado: R$ {_s(c.get('faturamento'))}\n"
+            f"Regime atual: {_s(c.get('regime_atual'))}\n"
+            f"Folha de pagamento mensal: R$ {_s(c.get('folha'), 'não informado')}\n"
+            f"Margem de lucro estimada: {_s(c.get('margem'), 'não informada')}\n"
+            f"Número de sócios: {_s(c.get('socios'), 'não informado')}\n"
+            f"Pró-labore praticado: R$ {_s(c.get('prolabore'), 'não informado')}\n"
+            f"Compras / custos mensais (para Lucro Real): R$ {_s(c.get('custos'), 'não informado')}\n"
+            f"Situação especial: {_s(c.get('situacao'), 'nenhuma')}\n\n"
+            f"Compare os regimes aplicáveis ao perfil. Se o faturamento for informado, calcule a carga tributária "
+            f"estimada em cada regime (DAS/Simples, ou IRPJ+CSLL+PIS+COFINS para presumido/real). "
+            f"Recomende o regime mais vantajoso com fundamentação clara."
+        ),
+    },
+    "fiscal_parcelamento": {
+        "label": "Pedido de Parcelamento Fiscal",
+        "category": "fiscal",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 1200,
+        "system": (
+            "Você é um contador especialista em regularização fiscal e parcelamentos tributários brasileiros, "
+            "com conhecimento dos programas PERT (Lei 13.496/2017), REFIS, PGFN, parcelamento do Simples Nacional "
+            "(LC 123/2006, art. 79) e parcelamento ordinário da RFB (Lei 10.522/2002). "
+            "Redija comunicados/orientações para clientes sobre parcelamento de débitos fiscais. "
+            "ESTRUTURA:\n"
+            "1. Situação atual e impacto do débito\n"
+            "2. Modalidade de parcelamento recomendada e suas condições\n"
+            "3. Documentação necessária para formalizar o pedido\n"
+            "4. Passo a passo do processo (com portais: e-CAC, PGFN, Simei.ws)\n"
+            "5. Alertas importantes (suspensão de exigibilidade, certidão negativa, prazo de adesão)\n"
+            "6. Próximos passos com o escritório\n"
+            "Tom: firme e orientador — o cliente precisa agir, mas sem pânico. Mostre que há solução. "
+            "Retorne APENAS o comunicado. Sem notas adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija o comunicado de orientação sobre parcelamento de débitos fiscais.\n\n"
+            f"DADOS:\n"
+            f"Empresa / Cliente: {_s(c.get('empresa'))}\n"
+            f"CNPJ: {_s(c.get('cnpj'), 'não informado')}\n"
+            f"Regime tributário: {_s(c.get('regime'))}\n"
+            f"Órgão credor: {_s(c.get('orgao'))}\n"
+            f"Débito total estimado: R$ {_s(c.get('debito'))}\n"
+            f"Origem dos débitos: {_s(c.get('origem'))}\n"
+            f"Modalidade desejada: {_s(c.get('modalidade'), 'a definir conforme análise')}\n"
+            f"Prazo de adesão / urgência: {_s(c.get('prazo'), 'verificar junto ao órgão')}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Seja preciso sobre as condições da modalidade de parcelamento citada "
+            f"(percentual de entrada, número máximo de parcelas, redução de multas/juros se aplicável). "
+            f"Destaque a importância de regularizar para manter certidão negativa ativa."
         ),
     },
 }

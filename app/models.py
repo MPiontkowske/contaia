@@ -23,6 +23,8 @@ TOOL_LABELS = {
     "fiscal_checklist": "Checklist de Obrigações",
     "fiscal_declaracao": "Guia de Declaração",
     "fiscal_mudanca_regime": "Mudança de Regime",
+    "fiscal_planejamento": "Planejamento Tributário",
+    "fiscal_parcelamento": "Parcelamento Fiscal",
 }
 
 TOOL_CATEGORY = {
@@ -45,6 +47,8 @@ TOOL_CATEGORY = {
     "fiscal_checklist": "fiscal",
     "fiscal_declaracao": "fiscal",
     "fiscal_mudanca_regime": "fiscal",
+    "fiscal_planejamento": "fiscal",
+    "fiscal_parcelamento": "fiscal",
 }
 
 

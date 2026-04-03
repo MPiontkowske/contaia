@@ -14,13 +14,15 @@
 .btn-feedback:hover { background:var(--surface-3); border-color:var(--border-2); }
 .btn-feedback.selected-pos { background:var(--green-dim); border-color:var(--green); color:var(--green); }
 .btn-feedback.selected-neg { background:var(--red-dim); border-color:var(--red); color:var(--red); }
+.result-box { white-space: pre-wrap; }
+.badge-opus { display:inline-block; font-size:.68rem; font-weight:700; padding:2px 7px; border-radius:10px; background:rgba(212,168,67,.15); color:var(--gold); border:1px solid rgba(212,168,67,.3); vertical-align:middle; margin-left:6px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div class="page-title">📋 Fiscal</div>
-  <div class="page-subtitle">Checklists de obrigações, guias de declaração e comunicados de mudança de regime.</div>
+  <div class="page-subtitle">Checklists precisos, planejamento tributário e parcelamentos — tudo com base na legislação vigente.</div>
 </div>
 
 <div class="page-body">
@@ -44,47 +46,53 @@
         <button class="btn btn-ghost btn-sm" id="btn-del-tmpl" onclick="deleteTemplate()" style="display:none" title="Remover template">✕</button>
       </div>
 
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="0">Checklist Mensal</button>
-        <button class="tab-btn" data-tab="1">Guia de Declaração</button>
-        <button class="tab-btn" data-tab="2">Mudança de Regime</button>
+      <div class="tabs" style="flex-wrap:wrap; gap:4px">
+        <button class="tab-btn active" data-tab="0">📅 Checklist</button>
+        <button class="tab-btn" data-tab="1">📄 Declaração</button>
+        <button class="tab-btn" data-tab="2">🔄 Regime</button>
+        <button class="tab-btn" data-tab="3">📊 Planejamento</button>
+        <button class="tab-btn" data-tab="4">🤝 Parcelamento</button>
       </div>
 
       <!-- Tab 0: Checklist de Obrigações Mensais -->
       <div class="tab-pane active" id="tab-0">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
           <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t0-empresa" placeholder="Ex: Padaria do João Ltda"></div>
-          <div class="form-group"><label class="form-label">Competência (mês/ano)</label><input class="form-control" id="t0-competencia" placeholder="Ex: Março/2025"></div>
+          <div class="form-group"><label class="form-label">Competência</label><input class="form-control" id="t0-competencia" placeholder="Ex: Março/2025"></div>
         </div>
         <div class="form-group"><label class="form-label">Regime tributário</label>
           <select class="form-control" id="t0-regime">
             <option value="Simples Nacional">Simples Nacional</option>
             <option value="MEI — Microempreendedor Individual">MEI</option>
             <option value="Lucro Presumido">Lucro Presumido</option>
-            <option value="Lucro Real">Lucro Real</option>
+            <option value="Lucro Real — apuração mensal">Lucro Real (mensal)</option>
+            <option value="Lucro Real — apuração trimestral">Lucro Real (trimestral)</option>
           </select>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-          <div class="form-group"><label class="form-label">Porte / tipo</label>
+          <div class="form-group"><label class="form-label">Porte</label>
             <select class="form-control" id="t0-porte">
-              <option value="Microempresa (ME)">Microempresa (ME)</option>
-              <option value="Empresa de Pequeno Porte (EPP)">Empresa de Pequeno Porte (EPP)</option>
-              <option value="Médio porte">Médio porte</option>
-              <option value="Grande porte">Grande porte</option>
+              <option value="Microempresa (ME) — faturamento até R$ 360k/ano">ME (até R$ 360k/ano)</option>
+              <option value="Empresa de Pequeno Porte (EPP) — faturamento até R$ 4,8M/ano">EPP (até R$ 4,8M/ano)</option>
+              <option value="Médio porte — acima de R$ 4,8M/ano">Médio porte</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label">Possui funcionários?</label>
+          <div class="form-group"><label class="form-label">Funcionários CLT?</label>
             <select class="form-control" id="t0-funcionarios">
-              <option value="Sim">Sim</option>
-              <option value="Não">Não</option>
+              <option value="Sim — possui funcionários registrados em CLT">Sim</option>
+              <option value="Não — sem funcionários CLT">Não</option>
+              <option value="Apenas sócios com pró-labore">Apenas pró-labore</option>
             </select>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">Atividade principal</label>
-          <input class="form-control" id="t0-atividade" placeholder="Ex: Comércio varejista de alimentos, Serviços de consultoria">
+        <div class="form-group"><label class="form-label">Atividade principal (CNAE ou descrição)</label>
+          <input class="form-control" id="t0-atividade" placeholder="Ex: 4711-3/02 — Comércio varejista de alimentos; 6201-5/01 — Desenvolvimento de software">
+        </div>
+        <div class="form-group"><label class="form-label">Estado / Município principal</label>
+          <input class="form-control" id="t0-municipio" placeholder="Ex: São Paulo/SP">
         </div>
         <div class="form-group"><label class="form-label">Observações específicas</label>
-          <textarea class="form-control" id="t0-observacoes" rows="2" placeholder="Ex: Possui contribuição de INSS pró-labore, opera em dois municípios…"></textarea>
+          <textarea class="form-control" id="t0-observacoes" rows="2" placeholder="Ex: Empresa com inscrição estadual ativa, opera em 2 municípios, possui substituição tributária de ICMS…"></textarea>
         </div>
       </div>
 
@@ -94,12 +102,13 @@
           <div class="form-group"><label class="form-label">Nome do cliente</label><input class="form-control" id="t1-cliente" placeholder="Ex: João Silva"></div>
           <div class="form-group"><label class="form-label">Tipo de declaração</label>
             <select class="form-control" id="t1-declaracao">
-              <option value="IRPF — Declaração de Imposto de Renda Pessoa Física">IRPF — Pessoa Física</option>
-              <option value="IRPJ — Declaração de Imposto de Renda Pessoa Jurídica">IRPJ — Pessoa Jurídica</option>
-              <option value="DEFIS — Declaração de Informações do Simples Nacional">DEFIS — Simples Nacional</option>
-              <option value="DASN-SIMEI — Declaração Anual do MEI">DASN-SIMEI — MEI</option>
-              <option value="ECF — Escrituração Contábil Fiscal">ECF</option>
-              <option value="DIRF — Declaração do Imposto Retido na Fonte">DIRF</option>
+              <option value="IRPF — Declaração de Ajuste Anual do Imposto de Renda Pessoa Física">IRPF — Imposto de Renda PF</option>
+              <option value="IRPJ — Declaração de Imposto de Renda Pessoa Jurídica (Lucro Real/Presumido)">IRPJ — Imposto de Renda PJ</option>
+              <option value="DEFIS — Declaração de Informações Socioeconômicas e Fiscais do Simples Nacional">DEFIS — Simples Nacional</option>
+              <option value="DASN-SIMEI — Declaração Anual Simplificada do MEI">DASN-SIMEI — MEI</option>
+              <option value="ECF — Escrituração Contábil Fiscal">ECF — Escrituração Contábil Fiscal</option>
+              <option value="DIRF — Declaração do Imposto sobre a Renda Retido na Fonte">DIRF — IR Retido na Fonte</option>
+              <option value="DIMOB — Declaração de Informações sobre Atividades Imobiliárias">DIMOB — Atividades Imobiliárias</option>
             </select>
           </div>
         </div>
@@ -107,11 +116,11 @@
           <div class="form-group"><label class="form-label">Ano-calendário / exercício</label><input class="form-control" id="t1-exercicio" placeholder="Ex: 2024 (exercício 2025)"></div>
           <div class="form-group"><label class="form-label">Prazo de entrega</label><input class="form-control" id="t1-prazo" placeholder="Ex: 30/05/2025"></div>
         </div>
-        <div class="form-group"><label class="form-label">Documentos necessários</label>
-          <textarea class="form-control" id="t1-documentos" rows="3" placeholder="Ex: Informe de rendimentos, comprovante de despesas médicas, recibos de aluguel…"></textarea>
+        <div class="form-group"><label class="form-label">Documentos que o cliente deve providenciar</label>
+          <textarea class="form-control" id="t1-documentos" rows="4" placeholder="Ex: Informe de rendimentos do empregador&#10;Comprovante de despesas médicas&#10;Recibos de aluguel recebido&#10;Extrato de investimentos (renda fixa/variável)&#10;Comprovante de pensão paga/recebida"></textarea>
         </div>
-        <div class="form-group"><label class="form-label">Pontos de atenção específicos</label>
-          <textarea class="form-control" id="t1-atencao" rows="2" placeholder="Ex: Cliente tem ganho de capital na venda de imóvel, rendimentos no exterior…"></textarea>
+        <div class="form-group"><label class="form-label">Situações especiais / pontos de atenção</label>
+          <textarea class="form-control" id="t1-atencao" rows="2" placeholder="Ex: Cliente vendeu imóvel em 2024 (ganho de capital), possui rendimentos no exterior, sócio de empresa…"></textarea>
         </div>
         <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t1-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
@@ -144,12 +153,96 @@
           <div class="form-group"><label class="form-label">Vigência da mudança</label><input class="form-control" id="t2-vigencia" placeholder="Ex: Janeiro/2026"></div>
           <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t2-contador" placeholder="Ex: Carlos Souza"></div>
         </div>
-        <div class="form-group"><label class="form-label">Motivo / justificativa</label>
-          <textarea class="form-control" id="t2-motivo" rows="2" placeholder="Ex: Faturamento ultrapassou limite do Simples, planejamento tributário para redução de carga fiscal…"></textarea>
+        <div class="form-group"><label class="form-label">Motivo técnico da recomendação</label>
+          <textarea class="form-control" id="t2-motivo" rows="2" placeholder="Ex: Faturamento ultrapassou sublimite do Simples (R$ 4,8M); margem elevada favorece Lucro Presumido; atividade vetada no Simples (art. 17 LC 123)…"></textarea>
         </div>
-        <div class="form-group"><label class="form-label">Impacto estimado</label>
-          <textarea class="form-control" id="t2-impacto" rows="2" placeholder="Ex: Redução de X% na carga tributária, novas obrigações acessórias incluindo SPED…"></textarea>
+        <div class="form-group"><label class="form-label">Impacto estimado na carga tributária</label>
+          <textarea class="form-control" id="t2-impacto" rows="2" placeholder="Ex: Redução estimada de R$ 1.200/mês na carga tributária; economia anual de aprox. R$ 14.400…"></textarea>
         </div>
+      </div>
+
+      <!-- Tab 3: Planejamento Tributário -->
+      <div class="tab-pane" id="tab-3">
+        <div style="padding:6px 10px; background:rgba(212,168,67,.08); border:1px solid rgba(212,168,67,.2); border-radius:var(--radius); margin-bottom:12px; font-size:.78rem; color:var(--gold)">
+          ✦ Gerado com Claude Opus — análise mais detalhada e precisa
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa</label><input class="form-control" id="t3-empresa" placeholder="Ex: Padaria do João Ltda"></div>
+          <div class="form-group"><label class="form-label">Atividade principal (CNAE)</label><input class="form-control" id="t3-atividade" placeholder="Ex: 4711-3/02 — Comércio varejista"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Faturamento anual estimado (R$)</label><input class="form-control" id="t3-faturamento" placeholder="Ex: 1.200.000,00"></div>
+          <div class="form-group"><label class="form-label">Regime atual</label>
+            <select class="form-control" id="t3-regime_atual">
+              <option value="Simples Nacional">Simples Nacional</option>
+              <option value="MEI">MEI</option>
+              <option value="Lucro Presumido">Lucro Presumido</option>
+              <option value="Lucro Real">Lucro Real</option>
+              <option value="Não optante ainda (empresa nova)">Empresa nova (sem regime)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Folha de pagamento mensal (R$)</label><input class="form-control" id="t3-folha" placeholder="Ex: 25.000,00 (ou 'sem funcionários')"></div>
+          <div class="form-group"><label class="form-label">Margem de lucro estimada (%)</label><input class="form-control" id="t3-margem" placeholder="Ex: 35% (ou 'não sei')"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Número de sócios</label><input class="form-control" id="t3-socios" placeholder="Ex: 2"></div>
+          <div class="form-group"><label class="form-label">Pró-labore mensal total (R$)</label><input class="form-control" id="t3-prolabore" placeholder="Ex: 10.000,00"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Custos/compras mensais estimados (R$)</label>
+          <input class="form-control" id="t3-custos" placeholder="Ex: 600.000,00 — relevante para Lucro Real (crédito de PIS/COFINS)">
+        </div>
+        <div class="form-group"><label class="form-label">Situação especial ou objetivo</label>
+          <textarea class="form-control" id="t3-situacao" rows="2" placeholder="Ex: Empresa cresce e vai ultrapassar limite do Simples em 2025; sócios querem maximizar distribuição de lucros isentos…"></textarea>
+        </div>
+      </div>
+
+      <!-- Tab 4: Parcelamento Fiscal -->
+      <div class="tab-pane" id="tab-4">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Empresa / Cliente</label><input class="form-control" id="t4-empresa" placeholder="Ex: Padaria do João Ltda ou João Silva (PF)"></div>
+          <div class="form-group"><label class="form-label">CNPJ / CPF</label><input class="form-control" id="t4-cnpj" placeholder="Ex: 12.345.678/0001-90"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Regime tributário</label>
+            <select class="form-control" id="t4-regime">
+              <option value="Simples Nacional">Simples Nacional</option>
+              <option value="MEI">MEI</option>
+              <option value="Lucro Presumido">Lucro Presumido</option>
+              <option value="Lucro Real">Lucro Real</option>
+              <option value="Pessoa Física">Pessoa Física</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Órgão credor</label>
+            <select class="form-control" id="t4-orgao">
+              <option value="Receita Federal do Brasil (RFB)">Receita Federal (RFB)</option>
+              <option value="PGFN — Procuradoria-Geral da Fazenda Nacional">PGFN (dívida ativa federal)</option>
+              <option value="Simples Nacional — DAS em atraso">Simples Nacional — DAS</option>
+              <option value="FGTS — Caixa Econômica Federal">FGTS (CEF)</option>
+              <option value="Estadual — SEFAZ">Estadual (SEFAZ)</option>
+              <option value="Municipal — Prefeitura">Municipal (ISS/Prefeitura)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+          <div class="form-group"><label class="form-label">Débito total estimado (R$)</label><input class="form-control" id="t4-debito" placeholder="Ex: 48.500,00"></div>
+          <div class="form-group"><label class="form-label">Prazo de adesão / urgência</label><input class="form-control" id="t4-prazo" placeholder="Ex: Até 31/03/2025 (PERT vigente)"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Origem dos débitos</label>
+          <textarea class="form-control" id="t4-origem" rows="2" placeholder="Ex: DAS não pagos de jan/2023 a dez/2023; DARF de IRPJ dos últimos 3 trimestres; FGTS de 12 competências em atraso…"></textarea>
+        </div>
+        <div class="form-group"><label class="form-label">Modalidade desejada</label>
+          <select class="form-control" id="t4-modalidade">
+            <option value="Parcelamento ordinário da RFB (Lei 10.522/2002 — até 60 meses)">Parcelamento ordinário RFB (60x)</option>
+            <option value="Parcelamento do Simples Nacional (LC 123, art. 79 — até 60 meses)">Parcelamento Simples Nacional (60x)</option>
+            <option value="PGFN — parcelamento administrativo (até 60 meses)">PGFN — parcelamento ordinário</option>
+            <option value="PERT — Programa Especial de Regularização Tributária (Lei 13.496/2017)">PERT (se em vigência)</option>
+            <option value="Parcelamento de FGTS (CEF — até 120 meses)">FGTS (até 120 meses)</option>
+            <option value="A definir conforme análise do débito">A definir</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Seu nome (contador)</label><input class="form-control" id="t4-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
 
       <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
@@ -162,11 +255,11 @@
       </div>
       {% endif %}
 
-      <!-- Salvar como template (inline) -->
+      <!-- Salvar como template -->
       <div class="save-tmpl-form" id="save-tmpl-form">
         <div style="font-size:.75rem; color:var(--text-faint); margin-bottom:6px">Salvar campos atuais como template:</div>
         <div class="inner">
-          <input class="form-control" id="tmpl-nome" placeholder="Ex: Checklist Simples — Padaria do João" style="font-size:.83rem">
+          <input class="form-control" id="tmpl-nome" placeholder="Ex: Checklist Simples — Padaria João" style="font-size:.83rem">
           <button class="btn btn-primary btn-sm" onclick="salvarTemplate()">Salvar</button>
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('save-tmpl-form').style.display='none'">✕</button>
         </div>
@@ -224,7 +317,8 @@
 </div>
 
 <script>
-const TOOL_KEYS = ['fiscal_checklist','fiscal_declaracao','fiscal_mudanca_regime'];
+const TOOL_KEYS = ['fiscal_checklist','fiscal_declaracao','fiscal_mudanca_regime','fiscal_planejamento','fiscal_parcelamento'];
+const BTN_LABELS = ['Gerar checklist','Gerar guia','Gerar comunicado','Gerar análise','Gerar comunicado'];
 const PROFILE = {
   nome:       {{ (user.profile_nome or user.name or '') | tojson }},
   escritorio: {{ (user.profile_escritorio or '') | tojson }},
@@ -233,6 +327,14 @@ const TEMPLATES_DATA = {{ templates_json | safe }};
 
 let activeTab = 0;
 let currentGenId = null;
+
+// Pré-preenche competência com mês atual
+(function preencheCompetencia() {
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const agora = new Date();
+  document.getElementById('t0-competencia').placeholder = `${meses[agora.getMonth()]}/${agora.getFullYear()}`;
+  document.getElementById('t0-competencia').value = `${meses[agora.getMonth()]}/${agora.getFullYear()}`;
+})();
 
 (function initTemplates() {
   const sel = document.getElementById('template-select');
@@ -264,6 +366,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById('tab-' + t).classList.add('active');
     activeTab = t;
+    document.getElementById('btn-text').textContent = BTN_LABELS[t];
     resetResult();
     document.getElementById('tab-' + t).querySelectorAll('[id$="-contador"]').forEach(el => {
       if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
@@ -272,7 +375,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 function resetResult() {
-  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>Gerar texto</strong>.</div>';
+  document.getElementById('result-box').innerHTML = '<div class="result-placeholder">O texto gerado aparecerá aqui.<br>Preencha os campos e clique em <strong>' + BTN_LABELS[activeTab] + '</strong>.</div>';
   document.getElementById('result-actions').style.display = 'none';
   document.getElementById('feedback-row').style.display = 'none';
   document.getElementById('save-tmpl-form').style.display = 'none';
@@ -326,11 +429,12 @@ async function gerar() {
   const spinner = document.getElementById('spinner');
   const btnText = document.getElementById('btn-text');
   const box = document.getElementById('result-box');
+  const label = BTN_LABELS[activeTab];
 
   btn.disabled = true;
   spinner.style.display = 'inline-block';
   btnText.textContent = 'Gerando…';
-  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando texto…</div>';
+  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando…</div>';
   document.getElementById('feedback-row').style.display = 'none';
 
   function showResult(resultado, id) {
@@ -341,13 +445,13 @@ async function gerar() {
     resetFeedbackUI();
     btn.disabled = false;
     spinner.style.display = 'none';
-    btnText.textContent = 'Gerar texto';
+    btnText.textContent = label;
   }
   function showError(msg) {
     box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${msg}</div>`;
     btn.disabled = false;
     spinner.style.display = 'none';
-    btnText.textContent = 'Gerar texto';
+    btnText.textContent = label;
   }
 
   try {
@@ -361,7 +465,7 @@ async function gerar() {
       showResult(data.resultado, data.id);
     } else if (data.trial_limit) {
       showUpgradeModal();
-      btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Gerar texto';
+      btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = label;
     } else {
       showError(data.error || 'Erro ao gerar. Tente novamente.');
     }
