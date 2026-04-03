@@ -27,6 +27,15 @@ def api_gerar():
     if tool not in TOOLS:
         return jsonify({"error": "Ferramenta inválida."}), 400
 
+    # Limite de gerações no trial
+    from flask import current_app
+    limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
+    if user.trial_limit_reached(limit):
+        return jsonify({
+            "error": f"Você atingiu o limite de {limit} gerações do trial. Assine o plano Pro para continuar.",
+            "trial_limit": True,
+        }), 403
+
     try:
         system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
         resultado = call_claude(system_prompt, user_message, max_tokens, model)

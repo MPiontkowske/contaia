@@ -102,6 +102,18 @@ class User(db.Model):
         return max(0, delta.days)
 
     @property
+    def trial_generation_count(self):
+        """Número de gerações feitas durante o trial."""
+        return self.generations.count()
+
+    def trial_generations_remaining(self, limit: int) -> int:
+        """Quantas gerações ainda restam no trial."""
+        return max(0, limit - self.trial_generation_count)
+
+    def trial_limit_reached(self, limit: int) -> bool:
+        return self.plan == "trial" and self.trial_generation_count >= limit
+
+    @property
     def plan_label(self):
         labels = {"trial": "Trial", "active": "Ativo", "cancelled": "Cancelado"}
         return labels.get(self.plan, self.plan)

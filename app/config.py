@@ -43,6 +43,7 @@ class Config:
 
     # --- Produto ---
     TRIAL_DAYS = 7
+    TRIAL_GENERATION_LIMIT = int(os.environ.get("TRIAL_GENERATION_LIMIT", 20))
     PLAN_PRICE_BRL = 97
     WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "5511999999999")
 

@@ -10,6 +10,7 @@ main_bp = Blueprint("main", __name__)
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
+    from flask import current_app
     user = db.session.get(User, session["user_id"])
     recentes = (
         Generation.query
@@ -20,12 +21,14 @@ def dashboard():
     )
     total = Generation.query.filter_by(user_id=user.id).count()
     favoritos = Generation.query.filter_by(user_id=user.id, is_favorite=True).count()
+    trial_limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
     return render_template(
         "dashboard.html",
         user=user,
         recentes=recentes,
         total=total,
         favoritos=favoritos,
+        trial_limit=trial_limit,
     )
 
 

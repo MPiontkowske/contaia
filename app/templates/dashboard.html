@@ -11,16 +11,30 @@
 
   {% if user.plan == 'trial' %}
     {% set dias = user.trial_days_remaining %}
-    {% if dias <= 2 %}
+    {% set usado = user.trial_generation_count %}
+    {% set restam = user.trial_generations_remaining(trial_limit) %}
+    {% set pct_uso = (usado / trial_limit * 100) | int %}
+    {% if usado >= trial_limit %}
     <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <span>⚠ Seu trial expira
-        {% if dias == 0 %}hoje{% elif dias == 1 %}amanhã{% else %}em {{ dias }} dias{% endif %} — não perca o acesso!
+      <span>🚫 Você usou todas as <strong>{{ trial_limit }} gerações</strong> do trial. Assine para continuar gerando textos.</span>
+      <a href="/planos" class="btn btn-primary btn-sm">Assinar agora</a>
+    </div>
+    {% elif dias <= 2 %}
+    <div class="alert alert-error" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>⚠ Trial expira
+        {% if dias == 0 %}hoje{% elif dias == 1 %}amanhã{% else %}em {{ dias }} dias{% endif %}
+        · {{ restam }} geraç{{ 'ão' if restam == 1 else 'ões' }} restante{{ '' if restam == 1 else 's' }}
       </span>
       <a href="/planos" class="btn btn-primary btn-sm">Assinar agora</a>
     </div>
+    {% elif pct_uso >= 80 %}
+    <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>⚠ Você usou <strong>{{ usado }}/{{ trial_limit }} gerações</strong> do trial — restam {{ restam }}.</span>
+      <a href="/planos" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Assinar</a>
+    </div>
     {% else %}
     <div class="alert alert-warning" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <span>⏳ Trial: <strong>{{ dias }} dias restantes</strong> · {{ total }} texto{{ 's' if total != 1 else '' }} gerado{{ 's' if total != 1 else '' }}</span>
+      <span>⏳ Trial: <strong>{{ dias }} dias restantes</strong> · {{ usado }}/{{ trial_limit }} gerações usadas</span>
       <a href="/planos" class="btn btn-outline btn-sm" style="border-color:rgba(212,168,67,.4); color:var(--gold)">Ver planos</a>
     </div>
     {% endif %}
@@ -53,12 +67,12 @@
     {% if user.plan == 'trial' %}
     <div class="stat-card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px">
-        <div class="stat-value" style="color:var(--gold)">{{ user.trial_days_remaining }}d</div>
-        <span style="font-size:.7rem; color:var(--text-faint)">de 7</span>
+        <div class="stat-value" style="color:{% if pct_uso >= 100 %}var(--red){% elif pct_uso >= 80 %}var(--gold){% else %}var(--text){% endif %}">{{ usado }}/{{ trial_limit }}</div>
+        <span style="font-size:.7rem; color:var(--text-faint)">gerações</span>
       </div>
-      <div class="stat-label">Dias de trial</div>
+      <div class="stat-label">Uso do trial</div>
       <div style="margin-top:8px; height:4px; background:var(--surface-3); border-radius:4px; overflow:hidden">
-        <div style="height:100%; width:{{ ((7 - user.trial_days_remaining) / 7 * 100) | int }}%; background:var(--gold); border-radius:4px; transition:width .3s"></div>
+        <div style="height:100%; width:{{ [pct_uso, 100] | min }}%; background:{% if pct_uso >= 100 %}var(--red){% elif pct_uso >= 80 %}var(--gold){% else %}var(--green){% endif %}; border-radius:4px; transition:width .3s"></div>
       </div>
     </div>
     {% elif user.plan == 'active' and user.subscription_end %}

@@ -114,6 +114,7 @@
             <th>Plano</th>
             <th>Vencimento</th>
             <th>Gerações</th>
+            <th>Uso trial</th>
             <th>Cadastro</th>
             <th>Último acesso</th>
             <th>Ação</th>
@@ -143,15 +144,32 @@
               {% endif %}
             </td>
             <td style="color:var(--text-dim)">{{ u.generations.count() }}</td>
+            <td>
+              {% if u.plan == 'trial' %}
+                {% set uso = u.trial_generation_count %}
+                {% set pct = (uso / trial_limit * 100) | int %}
+                <div style="display:flex; align-items:center; gap:6px">
+                  <span style="font-size:.78rem; color:{% if uso >= trial_limit %}var(--red){% elif pct >= 80 %}var(--gold){% else %}var(--text-dim){% endif %}">{{ uso }}/{{ trial_limit }}</span>
+                  <div style="width:48px; height:4px; background:var(--surface-3); border-radius:4px; overflow:hidden">
+                    <div style="height:100%; width:{{ [pct,100]|min }}%; background:{% if uso >= trial_limit %}var(--red){% elif pct >= 80 %}var(--gold){% else %}var(--green){% endif %}; border-radius:4px"></div>
+                  </div>
+                </div>
+              {% else %}
+                <span style="color:var(--text-faint)">—</span>
+              {% endif %}
+            </td>
             <td style="color:var(--text-faint); font-size:.8rem">{{ u.created_at.strftime('%d/%m/%Y') }}</td>
             <td style="color:var(--text-faint); font-size:.8rem">
               {{ u.last_login_at.strftime('%d/%m/%Y') if u.last_login_at else '—' }}
             </td>
-            <td>
+            <td style="display:flex; gap:6px; flex-wrap:wrap">
               {% if not u.is_admin %}
               <button class="btn btn-outline btn-sm" id="btn-plan-{{ u.id }}" onclick="togglePlan({{ u.id }}, this)">
                 {{ 'Cancelar' if u.plan == 'active' else 'Ativar' }}
               </button>
+              {% if u.plan == 'trial' %}
+              <button class="btn btn-ghost btn-sm" onclick="extenderTrial({{ u.id }}, this)" title="Estender trial em +7 dias">+7d</button>
+              {% endif %}
               {% endif %}
             </td>
           </tr>
@@ -211,6 +229,17 @@
 })();
 </script>
 <script>
+async function extenderTrial(uid, btn) {
+  btn.disabled = true;
+  const data = await api(`/admin/extend-trial/${uid}`, { days: 7 });
+  if (data.ok) {
+    toast(`Trial estendido até ${data.trial_ends}`);
+  } else {
+    toast(data.error || 'Erro ao estender trial', 'error');
+  }
+  btn.disabled = false;
+}
+
 async function togglePlan(uid, btn) {
   btn.disabled = true;
   btn.textContent = '…';

@@ -13,6 +13,9 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @admin_bp.route("/")
 @admin_required
 def admin_dashboard():
+    from flask import current_app
+    trial_limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
+
     current_user = db.session.get(User, session["user_id"])
     users = User.query.order_by(User.created_at.desc()).all()
     total_geracoes = Generation.query.count()
@@ -86,7 +89,24 @@ def admin_dashboard():
         chart_data=chart_data,
         expiring_soon=expiring_soon,
         feedback_stats=feedback_stats,
+        trial_limit=trial_limit,
     )
+
+
+@admin_bp.route("/extend-trial/<int:user_id>", methods=["POST"])
+@admin_required
+def extend_trial(user_id: int):
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "Usuário não encontrado."}), 404
+    if user.plan != "trial":
+        return jsonify({"error": "Usuário não está no trial."}), 400
+    data = request.get_json(silent=True) or {}
+    days = int(data.get("days", 7))
+    user.trial_ends = user.trial_ends + timedelta(days=days)
+    user.trial_warned_at = None  # permite reenvio do e-mail D-2
+    db.session.commit()
+    return jsonify({"ok": True, "trial_ends": user.trial_ends.strftime("%d/%m/%Y")})
 
 
 @admin_bp.route("/toggle-plan/<int:user_id>", methods=["POST"])
