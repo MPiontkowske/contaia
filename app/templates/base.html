@@ -614,6 +614,22 @@
 {% block standalone %}{% endblock %}
 {% endif %}
 
+<!-- Modal de upgrade (trial esgotado) -->
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.75);align-items:center;justify-content:center">
+  <div style="background:#111118;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:36px 32px;max-width:420px;width:90%;text-align:center">
+    <div style="font-size:2rem;margin-bottom:12px">🔒</div>
+    <h2 style="margin:0 0 10px;font-size:1.15rem;color:var(--text)">Limite do trial atingido</h2>
+    <p style="margin:0 0 24px;color:#888;font-size:.9rem;line-height:1.6">
+      Você usou todas as gerações gratuitas. Assine o plano Pro para continuar usando todas as ferramentas sem limitação.
+    </p>
+    <a href="/planos" style="display:inline-block;background:var(--gold);color:#000;font-weight:700;font-size:.95rem;padding:12px 32px;border-radius:8px;text-decoration:none">
+      Ver planos e assinar →
+    </a>
+    <br>
+    <button onclick="document.getElementById('upgrade-modal').style.display='none'" style="margin-top:16px;background:none;border:none;color:#555;font-size:.85rem;cursor:pointer">Fechar</button>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <script>
@@ -650,6 +666,42 @@ async function api(url, body, method = 'POST') {
     body: body ? JSON.stringify(body) : undefined,
   });
   return res.json();
+}
+
+// ── Upgrade modal ──
+function showUpgradeModal() {
+  const m = document.getElementById('upgrade-modal');
+  if (m) m.style.display = 'flex';
+}
+document.getElementById('upgrade-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
+// ── Async job polling ──
+async function pollResult(jobId, { onDone, onError, intervalMs = 2000, maxAttempts = 60 } = {}) {
+  let attempts = 0;
+  return new Promise((resolve) => {
+    const timer = setInterval(async () => {
+      attempts++;
+      try {
+        const data = await api(`/api/status/${jobId}`, null, 'GET');
+        if (data.state === 'SUCCESS') {
+          clearInterval(timer);
+          onDone && onDone(data);
+          resolve(data);
+        } else if (data.state === 'FAILURE' || attempts >= maxAttempts) {
+          clearInterval(timer);
+          const err = data.error || 'Tempo esgotado. Tente novamente.';
+          onError && onError(err);
+          resolve({ error: err });
+        }
+      } catch {
+        clearInterval(timer);
+        onError && onError('Erro de conexão.');
+        resolve({ error: 'Erro de conexão.' });
+      }
+    }, intervalMs);
+  });
 }
 
 // ── Copy text ──

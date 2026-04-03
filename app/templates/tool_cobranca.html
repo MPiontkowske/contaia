@@ -126,6 +126,11 @@
         <span id="btn-text">Gerar texto</span>
         <div class="spinner" id="spinner" style="display:none; border-color:rgba(0,0,0,.2); border-top-color:#000"></div>
       </button>
+      {% if trial_used is not none %}
+      <div style="text-align:right;font-size:.75rem;margin-top:6px;color:{% if trial_used >= trial_limit %}var(--red){% elif trial_used >= (trial_limit * 0.8)|int %}var(--gold){% else %}var(--text-faint){% endif %}">
+        {{ trial_used }}/{{ trial_limit }} gerações do trial usadas
+      </div>
+      {% endif %}
 
       <!-- Salvar como template (inline) -->
       <div class="save-tmpl-form" id="save-tmpl-form">
@@ -313,23 +318,40 @@ async function gerar() {
   box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando texto…</div>';
   document.getElementById('feedback-row').style.display = 'none';
 
-  try {
-    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
-    if (data.resultado) {
-      box.textContent = data.resultado;
-      currentGenId = data.id || null;
-      document.getElementById('result-actions').style.display = 'flex';
-      document.getElementById('feedback-row').style.display = 'flex';
-      resetFeedbackUI();
-    } else {
-      box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${data.error || 'Erro ao gerar. Tente novamente.'}</div>`;
-    }
-  } catch {
-    box.innerHTML = '<div class="result-placeholder" style="color:var(--red)">⚠ Erro de conexão. Tente novamente.</div>';
-  } finally {
+  function showResult(resultado, id) {
+    box.textContent = resultado;
+    currentGenId = id || null;
+    document.getElementById('result-actions').style.display = 'flex';
+    document.getElementById('feedback-row').style.display = 'flex';
+    resetFeedbackUI();
     btn.disabled = false;
     spinner.style.display = 'none';
     btnText.textContent = 'Gerar texto';
+  }
+  function showError(msg) {
+    box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${msg}</div>`;
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Gerar texto';
+  }
+
+  try {
+    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
+    if (data.job_id) {
+      await pollResult(data.job_id, {
+        onDone: (r) => showResult(r.resultado, r.id),
+        onError: showError,
+      });
+    } else if (data.resultado) {
+      showResult(data.resultado, data.id);
+    } else if (data.trial_limit) {
+      showUpgradeModal();
+      btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Gerar texto';
+    } else {
+      showError(data.error || 'Erro ao gerar. Tente novamente.');
+    }
+  } catch {
+    showError('Erro de conexão. Tente novamente.');
   }
 }
 

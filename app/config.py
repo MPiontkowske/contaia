@@ -54,6 +54,11 @@ class Config:
     # Link de pagamento pré-configurado no painel Pagar.me (substitui o WhatsApp)
     PAGARME_PAYMENT_LINK = os.environ.get("PAGARME_PAYMENT_LINK")
 
+    # --- Celery / Redis ---
+    # Se não definido, a geração continua síncrona (sem Celery)
+    CELERY_BROKER_URL    = os.environ.get("CELERY_BROKER_URL")
+    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

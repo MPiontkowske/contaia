@@ -36,6 +36,19 @@ def api_gerar():
             "trial_limit": True,
         }), 403
 
+    # ── Async path (Celery) ──────────────────────────────────────────────────
+    from ..celery_app import get_celery
+    celery = get_celery()
+    if celery is not None:
+        from ..tasks import get_gerar_task
+        task = get_gerar_task()
+        job = task.delay(
+            user.id, tool, campos,
+            user_api_key=user.anthropic_api_key or None,
+        )
+        return jsonify({"job_id": job.id})
+
+    # ── Sync path (sem Celery) ───────────────────────────────────────────────
     try:
         system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
         resultado = call_claude(system_prompt, user_message, max_tokens, model,
@@ -58,6 +71,28 @@ def api_gerar():
     db.session.commit()
 
     return jsonify({"resultado": resultado, "id": gen.id})
+
+
+@api_bp.route("/status/<job_id>", methods=["GET"])
+@login_required
+def api_status(job_id: str):
+    """Consulta o status de uma geração assíncrona (Celery)."""
+    from ..celery_app import get_celery
+    celery = get_celery()
+    if celery is None:
+        return jsonify({"error": "Celery não configurado."}), 404
+
+    result = celery.AsyncResult(job_id)
+    state = result.state  # PENDING / STARTED / SUCCESS / FAILURE / RETRY
+
+    if state == "SUCCESS":
+        data = result.result or {}
+        return jsonify({"state": "SUCCESS", "resultado": data.get("resultado"), "id": data.get("id")})
+
+    if state == "FAILURE":
+        return jsonify({"state": "FAILURE", "error": "Erro ao gerar. Tente novamente."})
+
+    return jsonify({"state": state})
 
 
 @api_bp.route("/favoritar/<int:gen_id>", methods=["POST"])

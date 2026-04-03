@@ -33,6 +33,16 @@ def _templates_for_category(user_id: int, category: str) -> str:
     return json.dumps([t.to_dict() for t in items], ensure_ascii=False)
 
 
+def _trial_ctx(user):
+    """Retorna dict com dados de uso do trial para o template."""
+    from flask import current_app
+    limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
+    if user.plan == "trial":
+        used = user.trial_generation_count
+        return {"trial_limit": limit, "trial_used": used}
+    return {"trial_limit": limit, "trial_used": None}
+
+
 @tools_bp.route("/ferramenta/cobranca")
 @access_required
 def tool_cobranca():
@@ -40,7 +50,7 @@ def tool_cobranca():
     recentes = _recent_for_tool(user.id, "cobranca")
     templates_json = _templates_for_category(user.id, "cobranca")
     return render_template("tool_cobranca.html", user=user, recentes=recentes,
-                           templates_json=templates_json)
+                           templates_json=templates_json, **_trial_ctx(user))
 
 
 @tools_bp.route("/ferramenta/relatorio")
@@ -50,7 +60,7 @@ def tool_relatorio():
     recentes = _recent_for_tool(user.id, "relatorio")
     templates_json = _templates_for_category(user.id, "relatorio")
     return render_template("tool_relatorio.html", user=user, recentes=recentes,
-                           templates_json=templates_json)
+                           templates_json=templates_json, **_trial_ctx(user))
 
 
 @tools_bp.route("/ferramenta/receita")
@@ -60,7 +70,7 @@ def tool_receita():
     recentes = _recent_for_tool(user.id, "receita")
     templates_json = _templates_for_category(user.id, "receita")
     return render_template("tool_receita.html", user=user, recentes=recentes,
-                           templates_json=templates_json)
+                           templates_json=templates_json, **_trial_ctx(user))
 
 
 @tools_bp.route("/ferramenta/cliente")
@@ -70,4 +80,4 @@ def tool_cliente():
     recentes = _recent_for_tool(user.id, "cliente")
     templates_json = _templates_for_category(user.id, "cliente")
     return render_template("tool_cliente.html", user=user, recentes=recentes,
-                           templates_json=templates_json)
+                           templates_json=templates_json, **_trial_ctx(user))
