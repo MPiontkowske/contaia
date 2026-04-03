@@ -165,4 +165,4 @@ def redefinir_senha(token):
 def index():
     if "user_id" in session:
         return redirect(url_for("main.dashboard"))
-    return redirect(url_for("auth.login"))
+    return render_template("landing.html", now=datetime.utcnow())

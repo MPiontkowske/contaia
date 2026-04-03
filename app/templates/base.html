@@ -340,6 +340,7 @@
     .badge-cobranca { background: rgba(251,146,60,.12); color: #fb923c; }
     .badge-relatorio { background: rgba(129,140,248,.12); color: #818cf8; }
     .badge-receita   { background: rgba(34,197,94,.12); color: #22c55e; }
+    .badge-cliente   { background: rgba(96,165,250,.12); color: #60a5fa; }
 
     /* ── Stats ── */
     .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; }
@@ -530,6 +531,9 @@
     <a href="/ferramenta/receita" class="nav-link {% if request.endpoint == 'tools.tool_receita' %}active{% endif %}">
       <i class="nav-icon">🏛️</i> Receita Federal
     </a>
+    <a href="/ferramenta/cliente" class="nav-link {% if request.endpoint == 'tools.tool_cliente' %}active{% endif %}">
+      <i class="nav-icon">📨</i> Com. Clientes
+    </a>
 
     <hr class="nav-divider">
     <a href="/historico" class="nav-link {% if request.endpoint == 'main.historico' %}active{% endif %}">
@@ -554,6 +558,17 @@
       {% if user.trial_days_remaining == 0 %}hoje{% elif user.trial_days_remaining == 1 %}amanhã{% else %}em {{ user.trial_days_remaining }} dias{% endif %}
     </div>
     <a href="/planos" style="color:var(--gold);font-weight:600;font-size:.76rem">Ver planos →</a>
+  </div>
+  {% elif user.plan == 'active' and user.subscription_days_remaining is not none and user.subscription_days_remaining <= 7 %}
+  <div style="padding:10px 12px;margin:0 10px 10px;background:var(--gold-dim);border:1px solid rgba(212,168,67,.3);border-radius:var(--radius);font-size:.78rem;line-height:1.5">
+    <div style="color:var(--gold);font-weight:700;margin-bottom:4px">
+      ⚠ Assinatura vence em {{ user.subscription_days_remaining }}d
+    </div>
+    <a href="/planos" style="color:var(--gold);font-weight:600;font-size:.76rem">Renovar →</a>
+  </div>
+  {% elif user.plan not in ('active',) and not user.is_admin %}
+  <div style="padding:10px 12px;margin:0 10px 10px">
+    <a href="/planos" style="display:block;text-align:center;background:var(--gold);color:#000;font-weight:700;font-size:.78rem;padding:7px 12px;border-radius:var(--radius);text-decoration:none">Ver planos</a>
   </div>
   {% endif %}
 
