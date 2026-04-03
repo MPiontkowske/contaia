@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}ContaIA{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}ContaIA — Copiloto de IA para contadores brasileiros.{% endblock %}">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="{{ request.url_root.rstrip('/') }}{{ request.path }}">
   <style>
     /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

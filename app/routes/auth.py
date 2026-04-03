@@ -1,5 +1,5 @@
 import secrets
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from ..extensions import db, limiter
@@ -166,3 +166,44 @@ def index():
     if "user_id" in session:
         return redirect(url_for("main.dashboard"))
     return render_template("landing.html", now=datetime.utcnow())
+
+
+@auth_bp.route("/robots.txt")
+def robots():
+    base = request.url_root.rstrip("/")
+    body = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /dashboard\n"
+        "Disallow: /historico\n"
+        "Disallow: /favoritos\n"
+        "Disallow: /perfil\n"
+        "Disallow: /admin/\n"
+        "Disallow: /api/\n"
+        f"Sitemap: {base}/sitemap.xml\n"
+    )
+    return Response(body, mimetype="text/plain")
+
+
+@auth_bp.route("/sitemap.xml")
+def sitemap():
+    base = request.url_root.rstrip("/")
+    urls = [
+        {"loc": f"{base}/",        "priority": "1.0", "changefreq": "weekly"},
+        {"loc": f"{base}/planos",  "priority": "0.8", "changefreq": "monthly"},
+        {"loc": f"{base}/login",   "priority": "0.5", "changefreq": "yearly"},
+        {"loc": f"{base}/register","priority": "0.6", "changefreq": "yearly"},
+    ]
+    rows = "".join(
+        f"  <url><loc>{u['loc']}</loc>"
+        f"<changefreq>{u['changefreq']}</changefreq>"
+        f"<priority>{u['priority']}</priority></url>\n"
+        for u in urls
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{rows}"
+        "</urlset>"
+    )
+    return Response(xml, mimetype="application/xml")
