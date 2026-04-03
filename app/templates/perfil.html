@@ -98,6 +98,38 @@
         <p>Você pode sobrescrever o valor em qualquer geração específica sem alterar o perfil.</p>
       </div>
     </div>
+
+    <!-- Chave de API pessoal -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Chave de API Anthropic</div>
+      <div id="chave-alert" class="alert" style="display:none; margin-bottom:12px"></div>
+
+      {% if user.anthropic_api_key %}
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface-3); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px">
+        <span style="font-size:.82rem; color:var(--green)">✓ Chave configurada:</span>
+        <code style="font-size:.82rem; color:var(--text-dim)" id="chave-masked">sk-ant-...{{ user.anthropic_api_key[-4:] }}</code>
+      </div>
+      <div style="display:flex; gap:8px">
+        <button class="btn btn-ghost btn-sm" style="color:var(--text-faint)" onclick="removerChave()">Remover chave</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('chave-form').style.display='block'; this.style.display='none'">Trocar chave</button>
+      </div>
+      <div id="chave-form" style="display:none; margin-top:12px">
+      {% else %}
+      <div style="font-size:.82rem; color:var(--text-dim); margin-bottom:12px; line-height:1.6">
+        Opcionalmente, use sua própria chave Anthropic. As gerações serão debitadas na sua conta Anthropic em vez da conta da plataforma.
+      </div>
+      <div id="chave-form">
+      {% endif %}
+        <div class="form-group">
+          <label class="form-label">Chave de API <span style="font-size:.72rem; color:var(--text-faint)">(começa com sk-ant-)</span></label>
+          <input class="form-control" type="password" id="chave-input" placeholder="sk-ant-api03-..." autocomplete="off">
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-salvar-chave" onclick="salvarChave()">
+          <span id="btn-chave-text">Salvar chave</span>
+          <div class="spinner" id="btn-chave-spinner" style="display:none"></div>
+        </button>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -186,6 +218,50 @@ function showAlert(id, msg, type) {
   el.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
   el.style.display = 'block';
   setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+async function salvarChave() {
+  const btn = document.getElementById('btn-salvar-chave');
+  const spinner = document.getElementById('btn-chave-spinner');
+  const btnText = document.getElementById('btn-chave-text');
+  const chave = document.getElementById('chave-input').value.trim();
+
+  if (!chave) { showAlert('chave-alert', 'Informe a chave.', 'error'); return; }
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Validando…';
+
+  try {
+    const data = await api('/api/chave-api', { action: 'save', chave });
+    if (data.ok) {
+      showAlert('chave-alert', `Chave salva: ${data.masked}`, 'success');
+      document.getElementById('chave-input').value = '';
+      toast('Chave de API salva');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      showAlert('chave-alert', data.error || 'Erro ao salvar.', 'error');
+    }
+  } catch {
+    showAlert('chave-alert', 'Erro de conexão.', 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Salvar chave';
+  }
+}
+
+async function removerChave() {
+  if (!confirm('Remover sua chave de API? As gerações passarão a usar a chave da plataforma.')) return;
+  try {
+    const data = await api('/api/chave-api', { action: 'remove' });
+    if (data.ok) {
+      toast('Chave removida');
+      setTimeout(() => location.reload(), 800);
+    }
+  } catch {
+    showAlert('chave-alert', 'Erro ao remover.', 'error');
+  }
 }
 </script>
 {% endblock %}

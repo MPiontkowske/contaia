@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 _client: Optional[anthropic.Anthropic] = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client(user_api_key: Optional[str] = None) -> anthropic.Anthropic:
+    """Retorna cliente Anthropic. Se user_api_key fornecida, cria cliente dedicado."""
+    if user_api_key:
+        return anthropic.Anthropic(api_key=user_api_key)
     global _client
     if _client is None:
         api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -23,9 +26,10 @@ def call_claude(
     user_message: str,
     max_tokens: int = 1024,
     model: str = "claude-sonnet-4-6",
+    user_api_key: Optional[str] = None,
 ) -> str:
     try:
-        client = _get_client()
+        client = _get_client(user_api_key)
         response = client.messages.create(
             model=model,
             max_tokens=max_tokens,

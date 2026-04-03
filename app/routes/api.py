@@ -38,7 +38,8 @@ def api_gerar():
 
     try:
         system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
-        resultado = call_claude(system_prompt, user_message, max_tokens, model)
+        resultado = call_claude(system_prompt, user_message, max_tokens, model,
+                                user_api_key=user.anthropic_api_key or None)
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 503
     except Exception:
@@ -140,6 +141,43 @@ def api_alterar_senha():
     user.password_hash = generate_password_hash(nova)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+# ── Chave de API pessoal ─────────────────────────────────────────────────────
+
+@api_bp.route("/chave-api", methods=["POST"])
+@login_required
+@limiter.limit("10 per hour")
+def api_chave_api():
+    user = db.session.get(User, session["user_id"])
+    data = request.get_json(silent=True) or {}
+    action = data.get("action", "save")
+
+    if action == "remove":
+        user.anthropic_api_key = None
+        db.session.commit()
+        return jsonify({"ok": True, "removed": True})
+
+    chave = data.get("chave", "").strip()
+    if not chave:
+        return jsonify({"error": "Informe a chave."}), 400
+    if not chave.startswith("sk-ant-"):
+        return jsonify({"error": "Chave inválida. Deve começar com sk-ant-."}), 400
+    if len(chave) < 20:
+        return jsonify({"error": "Chave muito curta."}), 400
+
+    # Valida a chave fazendo uma chamada mínima
+    try:
+        import anthropic as _anthropic
+        _anthropic.Anthropic(api_key=chave).models.list()
+    except _anthropic.AuthenticationError:
+        return jsonify({"error": "Chave inválida ou sem permissão."}), 400
+    except Exception:
+        pass  # timeout/rede — aceita mesmo assim
+
+    user.anthropic_api_key = chave
+    db.session.commit()
+    return jsonify({"ok": True, "masked": f"sk-ant-...{chave[-4:]}"})
 
 
 # ── Templates reutilizáveis ───────────────────────────────────────────────────
