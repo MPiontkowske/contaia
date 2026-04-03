@@ -34,6 +34,33 @@ def admin_dashboard():
     chart_dates  = [(inicio + timedelta(days=i)).isoformat() for i in range(28)]
     chart_data   = [cadastros_map.get(d, 0) for d in chart_dates]
 
+    # Feedback analytics por ferramenta
+    from sqlalchemy import case
+    feedback_rows = (
+        db.session.query(
+            Generation.tool,
+            func.count(Generation.id).label("total"),
+            func.sum(case((Generation.feedback == True, 1), else_=0)).label("positivo"),
+            func.sum(case((Generation.feedback == False, 1), else_=0)).label("negativo"),
+        )
+        .filter(Generation.feedback.isnot(None))
+        .group_by(Generation.tool)
+        .order_by(func.count(Generation.id).desc())
+        .all()
+    )
+    from ..models import TOOL_LABELS
+    feedback_stats = [
+        {
+            "tool": r.tool,
+            "label": TOOL_LABELS.get(r.tool, r.tool),
+            "total": r.total,
+            "positivo": r.positivo or 0,
+            "negativo": r.negativo or 0,
+            "pct": round((r.positivo or 0) / r.total * 100) if r.total else 0,
+        }
+        for r in feedback_rows
+    ]
+
     # Assinaturas vencendo em até 7 dias
     soon = datetime.utcnow() + timedelta(days=7)
     expiring_soon = (
@@ -58,6 +85,7 @@ def admin_dashboard():
         chart_labels=chart_labels,
         chart_data=chart_data,
         expiring_soon=expiring_soon,
+        feedback_stats=feedback_stats,
     )
 
 

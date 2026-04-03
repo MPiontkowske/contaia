@@ -487,8 +487,17 @@
     /* ── Divider ── */
     .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
+    /* ── Tool two-column layout ── */
+    .tool-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
+      .tool-layout { grid-template-columns: 1fr; }
       .sidebar {
         transform: translateX(-100%);
         transition: transform .25s ease;
@@ -538,6 +547,9 @@
     <hr class="nav-divider">
     <a href="/historico" class="nav-link {% if request.endpoint == 'main.historico' %}active{% endif %}">
       <i class="nav-icon">📋</i> Histórico
+    </a>
+    <a href="/favoritos" class="nav-link {% if request.endpoint == 'main.favoritos' %}active{% endif %}">
+      <i class="nav-icon">★</i> Favoritos
     </a>
     <a href="/perfil" class="nav-link {% if request.endpoint == 'main.perfil' %}active{% endif %}">
       <i class="nav-icon">👤</i> Meu Perfil

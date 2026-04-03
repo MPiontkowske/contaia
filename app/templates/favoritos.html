@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Favoritos — ContaIA{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title">★ Favoritos</div>
+  <div class="page-subtitle">Gerações que você salvou para acessar rapidamente.</div>
+</div>
+
+<div class="page-body">
+
+  <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap">
+    <a href="/favoritos" class="btn {% if not categoria %}btn-primary{% else %}btn-outline{% endif %} btn-sm">Todos</a>
+    <a href="/favoritos?categoria=cobranca" class="btn {% if categoria == 'cobranca' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">💼 Cobranças</a>
+    <a href="/favoritos?categoria=relatorio" class="btn {% if categoria == 'relatorio' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📊 Relatórios</a>
+    <a href="/favoritos?categoria=receita" class="btn {% if categoria == 'receita' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">🏛️ Receita Federal</a>
+    <a href="/favoritos?categoria=cliente" class="btn {% if categoria == 'cliente' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">📨 Clientes</a>
+  </div>
+
+  {% if items %}
+  <div class="history-list">
+    {% for g in items %}
+    <div class="history-item favorited" id="gen-{{ g.id }}">
+      <div class="history-item-meta">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+          <span class="badge badge-{{ g.category }}">{{ g.tool_label }}</span>
+          <span class="history-item-title">{{ g.titulo or g.tool_label }}</span>
+        </div>
+        <span class="history-item-date">{{ g.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+      </div>
+      <div class="history-item-preview">{{ g.resultado_preview }}</div>
+      <div class="history-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="expandir(this, {{ g.resultado | tojson }})">↓ Ver completo</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyText({{ g.resultado | tojson }})">⎘ Copiar</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportarDocx({{ g.id }})">⬇ .docx</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--gold)" onclick="desfavoritar({{ g.id }}, this)" title="Remover favorito">★ Remover</button>
+      </div>
+      <div class="history-full" id="full-{{ g.id }}" style="display:none; margin-top:10px; white-space:pre-wrap; font-size:.85rem; color:var(--text); background:var(--surface-3); border-radius:6px; padding:14px; line-height:1.65; border:1px solid var(--border)">{{ g.resultado }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="card" style="text-align:center; padding:60px 20px">
+    <div style="font-size:2rem; margin-bottom:12px">☆</div>
+    <div style="font-weight:600; margin-bottom:6px">Nenhum favorito ainda</div>
+    <div style="font-size:.85rem; color:var(--text-dim); margin-bottom:20px">
+      {% if categoria %}
+      Sem favoritos nesta categoria.
+      {% else %}
+      Marque gerações com ★ para acessá-las rapidamente aqui.
+      {% endif %}
+    </div>
+    <a href="/historico" class="btn btn-primary" style="display:inline-flex; width:auto">Ver histórico completo</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function expandir(btn, texto) {
+  const id = btn.closest('.history-item').id.replace('gen-', '');
+  const el = document.getElementById('full-' + id);
+  const visivel = el.style.display !== 'none';
+  el.style.display = visivel ? 'none' : 'block';
+  btn.textContent = visivel ? '↓ Ver completo' : '↑ Recolher';
+}
+
+async function desfavoritar(id, btn) {
+  const data = await api(`/api/favoritar/${id}`);
+  if (data.ok && !data.is_favorite) {
+    const item = btn.closest('.history-item');
+    item.style.opacity = '0';
+    item.style.transition = 'opacity .2s';
+    setTimeout(() => item.remove(), 220);
+    toast('Removido dos favoritos');
+  }
+}
+</script>
+{% endblock %}

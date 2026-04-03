@@ -79,6 +79,29 @@
     <canvas id="chart-cadastros" height="90"></canvas>
   </div>
 
+  <!-- Feedback por ferramenta -->
+  {% if feedback_stats %}
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">Feedback por ferramenta</div>
+    <div style="display:flex; flex-direction:column; gap:10px">
+      {% for f in feedback_stats %}
+      <div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px">
+          <span style="font-size:.82rem; color:var(--text)">{{ f.label }}</span>
+          <span style="font-size:.75rem; color:var(--text-faint)">
+            👍 {{ f.positivo }} &nbsp; 👎 {{ f.negativo }} &nbsp;
+            <strong style="color:{% if f.pct >= 70 %}var(--green){% elif f.pct >= 40 %}var(--gold){% else %}var(--red){% endif %}">{{ f.pct }}%</strong>
+          </span>
+        </div>
+        <div style="height:6px; background:var(--surface-3); border-radius:4px; overflow:hidden">
+          <div style="height:100%; width:{{ f.pct }}%; background:{% if f.pct >= 70 %}var(--green){% elif f.pct >= 40 %}var(--gold){% else %}var(--red){% endif %}; border-radius:4px; transition:width .3s"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Tabela de usuários -->
   <div class="card">
     <div class="card-title">Usuários</div>

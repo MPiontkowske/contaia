@@ -65,6 +65,20 @@ def historico():
     )
 
 
+@main_bp.route("/favoritos")
+@login_required
+def favoritos():
+    user = db.session.get(User, session["user_id"])
+    categoria = request.args.get("categoria", "")
+    from ..models import TOOL_CATEGORY
+    query = Generation.query.filter_by(user_id=user.id, is_favorite=True)
+    if categoria:
+        valid_tools = [k for k, v in TOOL_CATEGORY.items() if v == categoria]
+        query = query.filter(Generation.tool.in_(valid_tools))
+    items = query.order_by(Generation.created_at.desc()).all()
+    return render_template("favoritos.html", user=user, items=items, categoria=categoria)
+
+
 @main_bp.route("/sem-acesso")
 @login_required
 def sem_acesso():
