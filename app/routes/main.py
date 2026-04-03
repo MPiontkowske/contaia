@@ -134,4 +134,5 @@ def planos():
     from flask import current_app
     user = db.session.get(User, session["user_id"])
     whatsapp = current_app.config.get("WHATSAPP_NUMBER", "5511999999999")
-    return render_template("planos.html", user=user, whatsapp=whatsapp)
+    pagarme_link = current_app.config.get("PAGARME_PAYMENT_LINK")
+    return render_template("planos.html", user=user, whatsapp=whatsapp, pagarme_link=pagarme_link)

@@ -47,6 +47,11 @@ class Config:
     PLAN_PRICE_BRL = 97
     WHATSAPP_NUMBER = os.environ.get("WHATSAPP_NUMBER", "5511999999999")
 
+    # --- Pagar.me ---
+    PAGARME_WEBHOOK_SECRET = os.environ.get("PAGARME_WEBHOOK_SECRET")
+    # Link de pagamento pré-configurado no painel Pagar.me (substitui o WhatsApp)
+    PAGARME_PAYMENT_LINK = os.environ.get("PAGARME_PAYMENT_LINK")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

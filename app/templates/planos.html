@@ -198,6 +198,18 @@
           <li><span class="check">✓</span> Suporte por WhatsApp</li>
         </ul>
 
+        {% if user.plan == 'active' %}
+        <div class="btn btn-outline btn-full" style="pointer-events:none;opacity:.5;justify-content:center">
+          Plano ativo
+        </div>
+        {% elif pagarme_link %}
+        <a href="/checkout" class="btn btn-primary btn-full">
+          Assinar agora — R$ 97/mês →
+        </a>
+        <div style="text-align:center;margin-top:10px;font-size:.75rem;color:var(--text-faint)">
+          Pix, cartão ou boleto · Ativação imediata
+        </div>
+        {% else %}
         {% set wa_msg = "Olá! Quero assinar o ContaIA Pro. Meu e-mail cadastrado é: " ~ user.email %}
         <a href="https://wa.me/{{ whatsapp }}?text={{ wa_msg | urlencode }}"
            target="_blank" rel="noopener"
@@ -207,6 +219,7 @@
         <div style="text-align:center;margin-top:10px;font-size:.75rem;color:var(--text-faint)">
           Ativação em até 1 hora útil
         </div>
+        {% endif %}
       </div>
 
     </div>
