@@ -95,6 +95,7 @@ def _run_migrations(app: Flask) -> None:
 
     migrations = [
         # tabela, coluna, SQL
+        ("user",       "onboarded_at",       "ALTER TABLE user ADD COLUMN onboarded_at DATETIME"),
         ("user",       "profile_nome",       "ALTER TABLE user ADD COLUMN profile_nome VARCHAR(120)"),
         ("user",       "profile_escritorio", "ALTER TABLE user ADD COLUMN profile_escritorio VARCHAR(120)"),
         ("user",       "profile_cargo",      "ALTER TABLE user ADD COLUMN profile_cargo VARCHAR(80)"),

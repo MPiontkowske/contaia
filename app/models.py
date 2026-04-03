@@ -60,6 +60,7 @@ class User(db.Model):
     subscription_end        = db.Column(db.DateTime)   # quando a assinatura ativa expira
     subscription_warned_at  = db.Column(db.DateTime)   # D-7 email enviado
     is_admin                = db.Column(db.Boolean, default=False)
+    onboarded_at            = db.Column(db.DateTime)  # preenchido após wizard de onboarding
 
     # Perfil do contador — pré-preenchimento em formulários
     profile_nome      = db.Column(db.String(120))   # Nome do contador

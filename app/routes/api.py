@@ -108,6 +108,9 @@ def api_perfil():
             if field in data:
                 val = data[field].strip()
                 setattr(user, field, val[:limits[field]] if val else None)
+        if data.get("onboarding") and not user.onboarded_at:
+            from datetime import datetime
+            user.onboarded_at = datetime.utcnow()
         db.session.commit()
         return jsonify({"ok": True})
 

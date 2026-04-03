@@ -184,4 +184,114 @@
   {% endif %}
 
 </div>
+
+{% if not user.onboarded_at and not user.is_admin %}
+<!-- ── Modal de onboarding ── -->
+<div id="onboarding-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px;max-width:460px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+
+    <!-- Passo 1 -->
+    <div id="ob-step1">
+      <div style="font-size:1.5rem;margin-bottom:4px">👋 Bem-vindo ao ContaIA, {{ user.first_name }}!</div>
+      <div style="font-size:.88rem;color:var(--text-dim);margin-bottom:24px;line-height:1.6">
+        Leva 30 segundos configurar seu perfil. Assim os formulários já vêm pré-preenchidos com seus dados.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nome do seu escritório <span style="color:var(--gold)">★</span></label>
+        <input class="form-control" id="ob-escritorio" placeholder="Ex: Souza Contabilidade" autocomplete="organization">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seu cargo</label>
+        <select class="form-control" id="ob-cargo">
+          <option value="">Prefiro não informar</option>
+          <option value="Contador">Contador(a)</option>
+          <option value="Sócio Contador">Sócio(a) Contador(a)</option>
+          <option value="Técnico Contábil">Técnico(a) Contábil</option>
+          <option value="Auxiliar Contábil">Auxiliar Contábil</option>
+          <option value="Diretor Financeiro">Diretor(a) Financeiro(a)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seu nome como contador (aparece nas assinaturas)</label>
+        <input class="form-control" id="ob-nome" value="{{ user.name }}" placeholder="Ex: Carlos Souza">
+      </div>
+
+      <div id="ob-alert" class="alert alert-error" style="display:none;margin-bottom:12px"></div>
+
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-primary" style="flex:1" id="ob-btn-salvar" onclick="obSalvar()">
+          <span id="ob-btn-text">Salvar e começar</span>
+          <div class="spinner" id="ob-spinner" style="display:none;border-color:rgba(0,0,0,.2);border-top-color:#000"></div>
+        </button>
+        <button class="btn btn-ghost" onclick="obPular()" style="font-size:.82rem;color:var(--text-faint)">Pular</button>
+      </div>
+    </div>
+
+    <!-- Passo 2 (confirmação) -->
+    <div id="ob-step2" style="display:none;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:12px">✅</div>
+      <div style="font-size:1.15rem;font-weight:700;margin-bottom:8px">Perfil salvo!</div>
+      <div style="font-size:.88rem;color:var(--text-dim);margin-bottom:24px;line-height:1.6">
+        Seus dados já estão pré-preenchidos em todos os formulários. Comece gerando seu primeiro texto.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <a href="/ferramenta/cobranca" class="btn btn-primary btn-full">Começar com Cobranças →</a>
+        <button class="btn btn-outline btn-full" onclick="obFechar()">Ir ao Dashboard</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function obSalvar() {
+  const btn = document.getElementById('ob-btn-salvar');
+  const spinner = document.getElementById('ob-spinner');
+  const btnText = document.getElementById('ob-btn-text');
+  const alertEl = document.getElementById('ob-alert');
+
+  const escritorio = document.getElementById('ob-escritorio').value.trim();
+  const cargo      = document.getElementById('ob-cargo').value;
+  const nome       = document.getElementById('ob-nome').value.trim();
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  btnText.textContent = 'Salvando…';
+  alertEl.style.display = 'none';
+
+  try {
+    const data = await api('/api/perfil', {
+      profile_escritorio: escritorio,
+      profile_cargo: cargo,
+      profile_nome: nome,
+      onboarding: true,
+    });
+    if (data.ok) {
+      document.getElementById('ob-step1').style.display = 'none';
+      document.getElementById('ob-step2').style.display = 'block';
+    } else {
+      alertEl.textContent = data.error || 'Erro ao salvar. Tente novamente.';
+      alertEl.style.display = 'block';
+    }
+  } catch {
+    alertEl.textContent = 'Erro de conexão. Tente novamente.';
+    alertEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Salvar e começar';
+  }
+}
+
+async function obPular() {
+  await api('/api/perfil', { onboarding: true });
+  obFechar();
+}
+
+function obFechar() {
+  document.getElementById('onboarding-overlay').style.display = 'none';
+}
+</script>
+{% endif %}
 {% endblock %}
