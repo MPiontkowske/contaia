@@ -414,6 +414,82 @@ TOOLS: dict = {
             f"prazo estimado e próximos passos."
         ),
     },
+    # ─── FISCAL ─────────────────────────────────────────────────────────────────
+    "fiscal_checklist": {
+        "label": "Checklist de Obrigações Mensais",
+        "category": "fiscal",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 1200,
+        "system": (
+            "Você é um contador especialista em obrigações fiscais brasileiras. "
+            "Gere checklists detalhados e precisos de obrigações mensais conforme o regime tributário. "
+            "Inclua prazos, órgãos responsáveis e penalidades por descumprimento. "
+            "Formate como lista clara com seções por tipo de obrigação (federal, estadual, municipal, trabalhista). "
+            "Retorne APENAS o checklist formatado. Sem introduções ou explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Gere um checklist de obrigações mensais para o mês de {_s(c.get('competencia'))}.\n\n"
+            f"Empresa: {_s(c.get('empresa'))}\n"
+            f"Regime tributário: {_s(c.get('regime'))}\n"
+            f"Porte / tipo: {_s(c.get('porte'), 'não informado')}\n"
+            f"Atividade principal: {_s(c.get('atividade'), 'não informada')}\n"
+            f"Possui funcionários: {_s(c.get('funcionarios'), 'não informado')}\n"
+            f"Observações específicas: {_s(c.get('observacoes'), 'nenhuma')}\n\n"
+            f"Inclua prazos, valores de multa por atraso quando aplicável, "
+            f"e uma coluna de status (A fazer / Entregue)."
+        ),
+    },
+    "fiscal_declaracao": {
+        "label": "Guia de Declaração ao Cliente",
+        "category": "fiscal",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 1000,
+        "system": (
+            "Você é um contador consultor especializado em declarações fiscais brasileiras. "
+            "Redija guias de orientação para clientes sobre declarações (IRPF, IRPJ, DEFIS, DASN-SIMEI, etc.), "
+            "em linguagem clara e acessível. "
+            "Tom: didático, sem juridiquês, tranquilizador. "
+            "Retorne APENAS o texto do comunicado/guia. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um guia de orientação ao cliente sobre declaração fiscal.\n\n"
+            f"Cliente: {_s(c.get('cliente'))}\n"
+            f"Tipo de declaração: {_s(c.get('declaracao'))}\n"
+            f"Ano-calendário / exercício: {_s(c.get('exercicio'))}\n"
+            f"Prazo de entrega: {_s(c.get('prazo'))}\n"
+            f"Documentos necessários: {_s(c.get('documentos'), 'padrão conforme tipo')}\n"
+            f"Pontos de atenção específicos: {_s(c.get('atencao'), 'nenhum')}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Inclua: o que é a declaração, por que é importante, "
+            f"documentos que o cliente precisa providenciar, prazo e próximos passos."
+        ),
+    },
+    "fiscal_mudanca_regime": {
+        "label": "Comunicado de Mudança de Regime",
+        "category": "fiscal",
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 900,
+        "system": (
+            "Você é um contador especialista em planejamento tributário brasileiro. "
+            "Redija comunicados sobre mudança de regime tributário de forma clara e estratégica. "
+            "Explique os impactos práticos, vantagens e próximos passos. "
+            "Tom: consultivo, seguro, sem alarmismo. "
+            "Retorne APENAS o texto do comunicado. Sem explicações adicionais."
+        ),
+        "build_user": lambda c: (
+            f"Redija um comunicado sobre mudança de regime tributário.\n\n"
+            f"Empresa: {_s(c.get('empresa'))}\n"
+            f"CNPJ: {_s(c.get('cnpj'), 'não informado')}\n"
+            f"Regime atual: {_s(c.get('regime_atual'))}\n"
+            f"Novo regime: {_s(c.get('regime_novo'))}\n"
+            f"Vigência da mudança: {_s(c.get('vigencia'))}\n"
+            f"Motivo / justificativa: {_s(c.get('motivo'))}\n"
+            f"Impacto estimado: {_s(c.get('impacto'), 'a ser detalhado')}\n"
+            f"Assinado por (contador): {_s(c.get('contador'))}\n\n"
+            f"Inclua: o que muda na prática, benefícios esperados, "
+            f"obrigações do novo regime e ações que o cliente deve tomar."
+        ),
+    },
 }
 
 

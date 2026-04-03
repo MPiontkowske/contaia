@@ -20,6 +20,9 @@ TOOL_LABELS = {
     "cliente_obrigacoes": "Lembrete de Obrigação",
     "cliente_abertura": "Abertura de Empresa",
     "cliente_encerramento": "Encerramento / Alteração",
+    "fiscal_checklist": "Checklist de Obrigações",
+    "fiscal_declaracao": "Guia de Declaração",
+    "fiscal_mudanca_regime": "Mudança de Regime",
 }
 
 TOOL_CATEGORY = {
@@ -39,6 +42,9 @@ TOOL_CATEGORY = {
     "cliente_obrigacoes": "cliente",
     "cliente_abertura": "cliente",
     "cliente_encerramento": "cliente",
+    "fiscal_checklist": "fiscal",
+    "fiscal_declaracao": "fiscal",
+    "fiscal_mudanca_regime": "fiscal",
 }
 
 

@@ -81,3 +81,13 @@ def tool_cliente():
     templates_json = _templates_for_category(user.id, "cliente")
     return render_template("tool_cliente.html", user=user, recentes=recentes,
                            templates_json=templates_json, **_trial_ctx(user))
+
+
+@tools_bp.route("/ferramenta/fiscal")
+@access_required
+def tool_fiscal():
+    user = db.session.get(User, session["user_id"])
+    recentes = _recent_for_tool(user.id, "fiscal")
+    templates_json = _templates_for_category(user.id, "fiscal")
+    return render_template("tool_fiscal.html", user=user, recentes=recentes,
+                           templates_json=templates_json, **_trial_ctx(user))
