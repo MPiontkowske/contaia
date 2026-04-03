@@ -125,7 +125,7 @@ def _run_migrations(app: Flask) -> None:
 
 
 def _init_db(app: Flask) -> None:
-    from .models import User, Generation
+    from .models import User
     from werkzeug.security import generate_password_hash
 
     admin_email = app.config.get("ADMIN_EMAIL", "admin@contaia.com.br")
@@ -137,14 +137,18 @@ def _init_db(app: Flask) -> None:
         )
         return
 
-    if not User.query.filter_by(email=admin_email).first():
-        admin = User(
-            name="Administrador",
-            email=admin_email,
-            password_hash=generate_password_hash(admin_pwd),
-            plan="active",
-            is_admin=True,
-        )
-        db.session.add(admin)
-        db.session.commit()
-        app.logger.info(f"Conta admin criada: {admin_email}")
+    try:
+        if not User.query.filter_by(email=admin_email).first():
+            admin = User(
+                name="Administrador",
+                email=admin_email,
+                password_hash=generate_password_hash(admin_pwd),
+                plan="active",
+                is_admin=True,
+            )
+            db.session.add(admin)
+            db.session.commit()
+            app.logger.info(f"Conta admin criada: {admin_email}")
+    except Exception as e:
+        db.session.rollback()
+        app.logger.warning(f"_init_db ignorado (tabelas ainda não existem?): {e}")
