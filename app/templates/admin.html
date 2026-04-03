@@ -102,9 +102,48 @@
   </div>
   {% endif %}
 
+  <!-- Modal: enviar e-mail -->
+  <div id="email-modal" style="display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.7); align-items:center; justify-content:center">
+    <div style="background:var(--surface); border:1px solid var(--border-2); border-radius:var(--radius-lg); padding:28px; width:min(500px,94vw)">
+      <div style="font-size:.9rem; font-weight:700; margin-bottom:16px; color:var(--text)">
+        ✉ Enviar e-mail para <span id="email-modal-nome" style="color:var(--gold)"></span>
+      </div>
+      <div id="email-alert" class="alert" style="display:none; margin-bottom:12px"></div>
+      <div class="form-group">
+        <label class="form-label">Assunto</label>
+        <input class="form-control" id="email-subject" placeholder="Ex: Seu trial está acabando — precisa de ajuda?">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mensagem</label>
+        <textarea class="form-control" id="email-body" rows="6" placeholder="Escreva a mensagem aqui. Pode usar quebras de linha."></textarea>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:4px">
+        <button class="btn btn-ghost btn-sm" onclick="fecharEmailModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-enviar-email" onclick="enviarEmail()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Tabela de usuários -->
   <div class="card">
-    <div class="card-title">Usuários</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:0">
+        Usuários
+        {% if seg %}<span style="font-size:.72rem; color:var(--gold); margin-left:6px">(filtrado)</span>{% endif %}
+        <span style="font-size:.72rem; color:var(--text-faint); margin-left:4px">{{ users|length }}</span>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap">
+        <a href="/admin/?sort={{ sort }}" class="btn btn-sm {% if not seg %}btn-primary{% else %}btn-outline{% endif %}">Todos</a>
+        <a href="/admin/?seg=trial_ativo&sort={{ sort }}" class="btn btn-sm {% if seg == 'trial_ativo' %}btn-primary{% else %}btn-outline{% endif %}">Trial ativo</a>
+        <a href="/admin/?seg=limite_atingido&sort={{ sort }}" class="btn btn-sm {% if seg == 'limite_atingido' %}btn-primary{% else %}btn-outline{% endif %}">Limite atingido</a>
+        <a href="/admin/?seg=sem_geracao&sort={{ sort }}" class="btn btn-sm {% if seg == 'sem_geracao' %}btn-primary{% else %}btn-outline{% endif %}">Sem geração</a>
+        <a href="/admin/?seg=ativos&sort={{ sort }}" class="btn btn-sm {% if seg == 'ativos' %}btn-primary{% else %}btn-outline{% endif %}">Ativos</a>
+        <a href="/admin/?seg=cancelados&sort={{ sort }}" class="btn btn-sm {% if seg == 'cancelados' %}btn-primary{% else %}btn-outline{% endif %}">Cancelados</a>
+        <span style="border-left:1px solid var(--border); margin:0 2px"></span>
+        <a href="/admin/?seg={{ seg }}&sort=cadastro" class="btn btn-sm {% if sort == 'cadastro' %}btn-outline{% else %}btn-ghost{% endif %}" style="font-size:.72rem">↓ Cadastro</a>
+        <a href="/admin/?seg={{ seg }}&sort=geracoes" class="btn btn-sm {% if sort == 'geracoes' %}btn-outline{% else %}btn-ghost{% endif %}" style="font-size:.72rem">↓ Gerações</a>
+      </div>
+    </div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -170,6 +209,7 @@
               {% if u.plan == 'trial' %}
               <button class="btn btn-ghost btn-sm" onclick="extenderTrial({{ u.id }}, this)" title="Estender trial em +7 dias">+7d</button>
               {% endif %}
+              <button class="btn btn-ghost btn-sm" onclick="abrirEmailModal({{ u.id }}, {{ u.first_name | tojson }}, {{ u.email | tojson }})" title="Enviar e-mail">✉</button>
               {% endif %}
             </td>
           </tr>
@@ -229,6 +269,53 @@
 })();
 </script>
 <script>
+let _emailUserId = null;
+
+function abrirEmailModal(uid, nome, email) {
+  _emailUserId = uid;
+  document.getElementById('email-modal-nome').textContent = `${nome} <${email}>`;
+  document.getElementById('email-subject').value = '';
+  document.getElementById('email-body').value = '';
+  document.getElementById('email-alert').style.display = 'none';
+  document.getElementById('email-modal').style.display = 'flex';
+}
+
+function fecharEmailModal() {
+  document.getElementById('email-modal').style.display = 'none';
+  _emailUserId = null;
+}
+
+async function enviarEmail() {
+  const subject = document.getElementById('email-subject').value.trim();
+  const body    = document.getElementById('email-body').value.trim();
+  const alertEl = document.getElementById('email-alert');
+  if (!subject || !body) {
+    alertEl.textContent = 'Preencha o assunto e a mensagem.';
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('btn-enviar-email');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  const data = await api(`/admin/enviar-email/${_emailUserId}`, { subject, body });
+  if (data.ok) {
+    fecharEmailModal();
+    toast('E-mail enviado com sucesso!');
+  } else {
+    alertEl.textContent = data.error || 'Erro ao enviar.';
+    alertEl.className = 'alert alert-error';
+    alertEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Enviar';
+}
+
+// Fechar modal clicando fora
+document.getElementById('email-modal').addEventListener('click', function(e) {
+  if (e.target === this) fecharEmailModal();
+});
+
 async function extenderTrial(uid, btn) {
   btn.disabled = true;
   const data = await api(`/admin/extend-trial/${uid}`, { days: 7 });

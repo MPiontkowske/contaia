@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, jsonify, session
+from flask import Blueprint, render_template, jsonify, session, request
 from sqlalchemy import func
 from ..extensions import db
 from ..models import User, Generation
@@ -16,8 +16,27 @@ def admin_dashboard():
     from flask import current_app
     trial_limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
 
+    seg  = request.args.get("seg", "")
+    sort = request.args.get("sort", "cadastro")
+
     current_user = db.session.get(User, session["user_id"])
-    users = User.query.order_by(User.created_at.desc()).all()
+
+    # Carrega todos e aplica sort em Python (base pequena)
+    all_users = User.query.all()
+    if sort == "geracoes":
+        all_users = sorted(all_users, key=lambda u: u.generations.count(), reverse=True)
+    else:
+        all_users = sorted(all_users, key=lambda u: u.created_at, reverse=True)
+
+    # Filtro de segmento
+    seg_map = {
+        "trial_ativo":     lambda u: u.plan == "trial" and (u.trial_days_remaining or 0) > 0,
+        "limite_atingido": lambda u: u.plan == "trial" and u.trial_limit_reached(trial_limit),
+        "sem_geracao":     lambda u: u.generations.count() == 0 and not u.is_admin,
+        "cancelados":      lambda u: u.plan == "cancelled",
+        "ativos":          lambda u: u.plan == "active",
+    }
+    users = [u for u in all_users if seg_map[seg](u)] if seg in seg_map else all_users
     total_geracoes = Generation.query.count()
     active_count = User.query.filter_by(plan="active").count()
     trial_count = User.query.filter_by(plan="trial").count()
@@ -90,7 +109,27 @@ def admin_dashboard():
         expiring_soon=expiring_soon,
         feedback_stats=feedback_stats,
         trial_limit=trial_limit,
+        seg=seg,
+        sort=sort,
     )
+
+
+@admin_bp.route("/enviar-email/<int:user_id>", methods=["POST"])
+@admin_required
+def enviar_email(user_id: int):
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"error": "Usuário não encontrado."}), 404
+    data = request.get_json(silent=True) or {}
+    subject = data.get("subject", "").strip()
+    body = data.get("body", "").strip()
+    if not subject or not body:
+        return jsonify({"error": "Assunto e mensagem são obrigatórios."}), 400
+    from ..services.email import send_admin_email
+    ok = send_admin_email(user, subject, body)
+    if not ok:
+        return jsonify({"error": "Falha ao enviar e-mail. Verifique MAIL_USERNAME no .env."}), 500
+    return jsonify({"ok": True})
 
 
 @admin_bp.route("/extend-trial/<int:user_id>", methods=["POST"])

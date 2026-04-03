@@ -234,6 +234,36 @@ _SUBSCRIPTION_WARNING_HTML = """\
 </html>"""
 
 
+def send_admin_email(user, subject: str, body: str) -> bool:
+    """Envia e-mail manual do admin para um usuário específico."""
+    if not current_app.config.get("MAIL_USERNAME"):
+        log.debug("MAIL_USERNAME não configurado — e-mail admin ignorado")
+        return False
+    try:
+        html_body = (
+            "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'></head>"
+            "<body style='margin:0;padding:0;background:#09090f;font-family:-apple-system,sans-serif'>"
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#09090f;padding:40px 0'>"
+            "<tr><td align='center'>"
+            "<table width='520' cellpadding='0' cellspacing='0' style='background:#111118;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:36px 32px;color:#e8e8e0'>"
+            "<tr><td style='padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.07)'>"
+            "<span style='font-size:1.4rem;font-weight:700;color:#e8e8e0'>Conta<span style=\"color:#d4a843\">IA</span></span>"
+            "</td></tr>"
+            "<tr><td style='padding-top:28px'>"
+            f"<p style='margin:0 0 16px;font-size:1rem;font-weight:700;color:#e8e8e0'>Olá, {user.first_name}!</p>"
+            f"<div style='color:#888;font-size:.9rem;line-height:1.65;white-space:pre-wrap'>{body}</div>"
+            "<p style='margin:24px 0 0;color:#555;font-size:.75rem'>&copy; ContaIA — Copiloto para contadores</p>"
+            "</td></tr></table></td></tr></table></body></html>"
+        )
+        msg = Message(subject=subject, recipients=[user.email], html=html_body)
+        mail.send(msg)
+        log.info("E-mail admin enviado para %s: %s", user.email, subject)
+        return True
+    except Exception as exc:
+        log.error("Erro ao enviar e-mail admin para %s: %s", user.email, exc)
+        return False
+
+
 def send_subscription_expiry_warning(user) -> bool:
     """Envia e-mail D-7 avisando que a assinatura vence em breve."""
     if not current_app.config.get("MAIL_USERNAME"):
