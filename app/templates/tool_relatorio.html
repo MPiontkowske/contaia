@@ -30,6 +30,11 @@
   <div>
     <div class="card">
 
+      <!-- Banner de pré-preenchimento -->
+      <div id="profile-banner" style="display:none; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; background:rgba(96,165,250,.08); border:1px solid rgba(96,165,250,.2); border-radius:var(--radius); margin-bottom:12px; font-size:.78rem; color:var(--text-dim)">
+        <span>✦ Campos pré-preenchidos com seu <a href="/perfil" style="color:var(--gold); text-decoration:none">perfil</a></span>
+      </div>
+
       <!-- Seletor de templates -->
       <div class="template-bar" id="template-bar">
         <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
@@ -58,6 +63,7 @@
           <div class="form-group"><label class="form-label">Lucro líquido (R$)</label><input class="form-control" id="t0-lucro" placeholder="Ex: 13.000"></div>
         </div>
         <div class="form-group"><label class="form-label">Observações adicionais</label><textarea class="form-control" id="t0-observacoes" placeholder="Ex: custos extras de manutenção, crescimento em delivery…" rows="3"></textarea></div>
+        <div class="form-group"><label class="form-label">Preparado por (contador)</label><input class="form-control" id="t0-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
 
       <!-- Tab 1: DRE -->
@@ -67,6 +73,7 @@
           <div class="form-group"><label class="form-label">Período</label><input class="form-control" id="t1-periodo" placeholder="Ex: Jan–Dez/2024"></div>
         </div>
         <div class="form-group"><label class="form-label">Dados do DRE</label><textarea class="form-control" id="t1-dre" placeholder="Cole as linhas do DRE: Receita Bruta, Deduções, Lucro Bruto, Despesas, EBITDA, Lucro Líquido…" rows="7"></textarea></div>
+        <div class="form-group"><label class="form-label">Preparado por (contador)</label><input class="form-control" id="t1-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
 
       <!-- Tab 2: Comparativo -->
@@ -76,6 +83,7 @@
           <div class="form-group"><label class="form-label">Dados do mês anterior</label><textarea class="form-control" id="t2-mes_anterior" placeholder="Ex: Dez/2024 — Fat: R$42.000, Desp: R$30.000" rows="5"></textarea></div>
           <div class="form-group"><label class="form-label">Dados do mês atual</label><textarea class="form-control" id="t2-mes_atual" placeholder="Ex: Jan/2025 — Fat: R$45.000, Desp: R$31.500" rows="5"></textarea></div>
         </div>
+        <div class="form-group"><label class="form-label">Preparado por (contador)</label><input class="form-control" id="t2-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
 
       <!-- Tab 3: Anual -->
@@ -85,6 +93,7 @@
           <div class="form-group"><label class="form-label">Ano</label><input class="form-control" id="t3-ano" placeholder="Ex: 2024"></div>
         </div>
         <div class="form-group"><label class="form-label">Dados do ano</label><textarea class="form-control" id="t3-dados" placeholder="Cole os dados anuais: faturamento por mês, principais despesas, resultado final…" rows="7"></textarea></div>
+        <div class="form-group"><label class="form-label">Preparado por (contador)</label><input class="form-control" id="t3-contador" placeholder="Ex: Carlos Souza"></div>
       </div>
 
       <button class="btn btn-primary btn-full" id="btn-gerar" onclick="gerar()">
@@ -176,6 +185,16 @@ let currentGenId = null;
   if (TEMPLATES_DATA.length === 0) document.getElementById('template-bar').style.opacity = '.5';
 })();
 
+// ── Pré-preencher perfil ──
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[id$="-contador"]').forEach(el => {
+    if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
+  });
+  if (PROFILE.nome || PROFILE.escritorio) {
+    document.getElementById('profile-banner').style.display = 'flex';
+  }
+});
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const t = parseInt(btn.dataset.tab);
@@ -185,6 +204,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-' + t).classList.add('active');
     activeTab = t;
     resetResult();
+    // Pré-preencher perfil na aba ativada
+    const tabEl = document.getElementById('tab-' + t);
+    tabEl.querySelectorAll('[id$="-contador"]').forEach(el => { if (!el.value && PROFILE.nome) el.value = PROFILE.nome; });
   });
 });
 

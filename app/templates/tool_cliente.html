@@ -30,6 +30,11 @@
   <div>
     <div class="card">
 
+      <!-- Banner de pré-preenchimento -->
+      <div id="profile-banner" style="display:none; align-items:center; gap:8px; padding:8px 12px; background:rgba(96,165,250,.08); border:1px solid rgba(96,165,250,.2); border-radius:var(--radius); margin-bottom:12px; font-size:.78rem; color:var(--text-dim)">
+        <span>✦ Campos pré-preenchidos com seu <a href="/perfil" style="color:var(--gold); text-decoration:none">perfil</a></span>
+      </div>
+
       <!-- Seletor de templates -->
       <div class="template-bar" id="template-bar">
         <span style="font-size:.75rem; color:var(--text-faint); white-space:nowrap">📄 Template:</span>
@@ -243,6 +248,9 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[id$="-contador"]').forEach(el => {
     if (!el.value && PROFILE.nome) el.value = PROFILE.nome;
   });
+  if (PROFILE.nome || PROFILE.escritorio) {
+    document.getElementById('profile-banner').style.display = 'flex';
+  }
 });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {

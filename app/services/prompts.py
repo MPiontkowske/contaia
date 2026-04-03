@@ -141,8 +141,9 @@ TOOLS: dict = {
             f"Faturamento bruto: R$ {_s(c.get('faturamento'))}\n"
             f"Despesas totais: R$ {_s(c.get('despesas'))}\n"
             f"Lucro líquido: R$ {_s(c.get('lucro'))}\n"
-            f"Observações do contador: {_s(c.get('observacoes'), 'Nenhuma')}\n\n"
-            f"Estruture em:\n"
+            f"Observações do contador: {_s(c.get('observacoes'), 'Nenhuma')}\n"
+            + (f"Preparado por: {_s(c.get('contador'))}\n" if c.get('contador') else "") +
+            f"\nEstruture em:\n"
             f"1. Resumo Executivo (2-3 frases)\n"
             f"2. Destaques do Mês (3 pontos positivos ou neutros)\n"
             f"3. Pontos de Atenção (1-2 alertas práticos)\n"
@@ -166,6 +167,7 @@ TOOLS: dict = {
             f"Empresa: {_s(c.get('empresa'))}\n"
             f"Período: {_s(c.get('periodo'))}\n\n"
             f"DRE:\n{_s(c.get('dre'))}\n\n"
+            + (f"Preparado por: {_s(c.get('contador'))}\n\n" if c.get('contador') else "") +
             f"Estruture em:\n"
             f"1. O que esses números significam (2-3 frases simples)\n"
             f"2. O que foi bem\n"
@@ -189,6 +191,7 @@ TOOLS: dict = {
             f"Empresa: {_s(c.get('empresa'))}\n\n"
             f"Dados do mês anterior:\n{_s(c.get('mes_anterior'))}\n\n"
             f"Dados do mês atual:\n{_s(c.get('mes_atual'))}\n\n"
+            + (f"Preparado por: {_s(c.get('contador'))}\n\n" if c.get('contador') else "") +
             f"Destaque variações relevantes (positivas e negativas). "
             f"Inclua percentual de variação quando possível. Máximo 10 linhas."
         ),
@@ -210,6 +213,7 @@ TOOLS: dict = {
             f"Empresa: {_s(c.get('empresa'))}\n"
             f"Ano de referência: {_s(c.get('ano'))}\n\n"
             f"Dados anuais fornecidos:\n{_s(c.get('dados'))}\n\n"
+            + (f"Preparado por: {_s(c.get('contador'))}\n\n" if c.get('contador') else "") +
             f"Estruture em:\n"
             f"1. Performance Geral do Ano (parágrafo)\n"
             f"2. 3 Conquistas do Período\n"
