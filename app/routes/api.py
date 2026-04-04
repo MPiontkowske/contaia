@@ -49,8 +49,13 @@ def api_gerar():
         return jsonify({"job_id": job.id})
 
     # ── Sync path (sem Celery) ───────────────────────────────────────────────
+    profile = {
+        "nome": user.profile_nome or "",
+        "escritorio": user.profile_escritorio or "",
+        "cargo": user.profile_cargo or "",
+    }
     try:
-        system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
+        system_prompt, user_message, max_tokens, model = build_prompt(tool, campos, profile=profile)
         resultado = call_claude(system_prompt, user_message, max_tokens, model,
                                 user_api_key=user.anthropic_api_key or None)
     except RuntimeError as e:
@@ -100,8 +105,13 @@ def api_gerar_stream():
             "trial_limit": True,
         }), 403
 
+    profile = {
+        "nome": user.profile_nome or "",
+        "escritorio": user.profile_escritorio or "",
+        "cargo": user.profile_cargo or "",
+    }
     try:
-        system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
+        system_prompt, user_message, max_tokens, model = build_prompt(tool, campos, profile=profile)
     except Exception:
         return jsonify({"error": "Erro ao preparar prompt."}), 500
 

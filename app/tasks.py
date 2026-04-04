@@ -19,7 +19,7 @@ def _get_task():
     @celery.task(bind=True, name="contaia.gerar_texto", max_retries=2,
                  default_retry_delay=5)
     def gerar_texto(self, user_id: int, tool: str, campos: dict,
-                    user_api_key: str | None = None):
+                    user_api_key: str | None = None, profile: dict | None = None):
         """
         Executa a chamada Claude e persiste a Generation no banco.
         Retorna dict com resultado e id da generation.
@@ -32,8 +32,14 @@ def _get_task():
         try:
             user = db.session.get(User, user_id)
             api_key = user_api_key or (user.anthropic_api_key if user else None)
+            if profile is None and user:
+                profile = {
+                    "nome": user.profile_nome or "",
+                    "escritorio": user.profile_escritorio or "",
+                    "cargo": user.profile_cargo or "",
+                }
 
-            system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
+            system_prompt, user_message, max_tokens, model = build_prompt(tool, campos, profile=profile)
             resultado = call_claude(system_prompt, user_message, max_tokens, model,
                                     user_api_key=api_key)
 

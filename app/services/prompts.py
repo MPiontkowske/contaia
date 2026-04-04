@@ -602,13 +602,29 @@ def get_tool_config(tool_key: str) -> dict | None:
     return TOOLS.get(tool_key)
 
 
-def build_prompt(tool_key: str, campos: dict) -> tuple[str, str, int, str]:
+def build_prompt(tool_key: str, campos: dict, profile: dict | None = None) -> tuple[str, str, int, str]:
     """
     Retorna (system_prompt, user_message, max_tokens, model).
     Lança KeyError se tool_key não existir.
+    profile: dict com chaves opcionais nome, escritorio, cargo.
     """
     config = TOOLS[tool_key]
     system = config["system"]
+
+    # Injeta identidade do contador no system prompt quando disponível
+    if profile:
+        parts = []
+        if profile.get("nome"):
+            parts.append(f"Nome: {profile['nome']}")
+        if profile.get("escritorio"):
+            parts.append(f"Escritório: {profile['escritorio']}")
+        if profile.get("cargo"):
+            parts.append(f"Cargo: {profile['cargo']}")
+        if parts:
+            identity = "Dados do contador que está usando o sistema: " + " | ".join(parts) + ". "
+            identity += "Use esses dados para assinar documentos, personalizar saudações e contextualizar os textos gerados."
+            system = system + "\n\n" + identity
+
     user = config["build_user"](campos)
     max_tokens = config["max_tokens"]
     model = config["model"]
