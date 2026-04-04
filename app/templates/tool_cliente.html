@@ -324,52 +324,17 @@ function getCampos() {
 }
 
 async function gerar() {
-  const btn = document.getElementById('btn-gerar');
-  const spinner = document.getElementById('spinner');
-  const btnText = document.getElementById('btn-text');
-  const box = document.getElementById('result-box');
-
-  btn.disabled = true;
-  spinner.style.display = 'inline-block';
-  btnText.textContent = 'Gerando…';
-  box.innerHTML = '<div class="result-placeholder" style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner" style="border-color:rgba(255,255,255,.15);border-top-color:var(--gold)"></div> Gerando texto…</div>';
-  document.getElementById('feedback-row').style.display = 'none';
-
-  function showResult(resultado, id) {
-    box.textContent = resultado;
-    currentGenId = id || null;
-    document.getElementById('result-actions').style.display = 'flex';
-    document.getElementById('feedback-row').style.display = 'flex';
-    resetFeedbackUI();
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.textContent = 'Gerar texto';
-  }
-  function showError(msg) {
-    box.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${msg}</div>`;
-    btn.disabled = false;
-    spinner.style.display = 'none';
-    btnText.textContent = 'Gerar texto';
-  }
-
-  try {
-    const data = await api('/api/gerar', { tool: TOOL_KEYS[activeTab], campos: getCampos() });
-    if (data.job_id) {
-      await pollResult(data.job_id, {
-        onDone: (r) => showResult(r.resultado, r.id),
-        onError: showError,
-      });
-    } else if (data.resultado) {
-      showResult(data.resultado, data.id);
-    } else if (data.trial_limit) {
-      showUpgradeModal();
-      btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Gerar texto';
-    } else {
-      showError(data.error || 'Erro ao gerar. Tente novamente.');
-    }
-  } catch {
-    showError('Erro de conexão. Tente novamente.');
-  }
+  await gerarStream({
+    toolKey: TOOL_KEYS[activeTab], campos: getCampos(),
+    btnEl: document.getElementById('btn-gerar'),
+    spinnerEl: document.getElementById('spinner'),
+    btnTextEl: document.getElementById('btn-text'),
+    boxEl: document.getElementById('result-box'),
+    feedbackRowEl: document.getElementById('feedback-row'),
+    resultActionsEl: document.getElementById('result-actions'),
+    btnLabel: 'Gerar texto',
+    onDone: (id) => { currentGenId = id; resetFeedbackUI(); },
+  });
 }
 
 function copiarResultado() {

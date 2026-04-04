@@ -671,6 +671,76 @@ async function api(url, body, method = 'POST') {
   return res.json();
 }
 
+// ── Streaming de geração (SSE) ──
+async function gerarStream({ toolKey, campos, btnEl, spinnerEl, btnTextEl, boxEl, feedbackRowEl, resultActionsEl, btnLabel, onDone }) {
+  btnEl.disabled = true;
+  spinnerEl.style.display = 'inline-block';
+  btnTextEl.textContent = 'Gerando…';
+  boxEl.textContent = '';
+  boxEl.classList.remove('result-placeholder');
+  if (feedbackRowEl) feedbackRowEl.style.display = 'none';
+  if (resultActionsEl) resultActionsEl.style.display = 'none';
+
+  function resetBtn(label) {
+    btnEl.disabled = false;
+    spinnerEl.style.display = 'none';
+    btnTextEl.textContent = label || btnLabel;
+  }
+  function showError(msg) {
+    boxEl.innerHTML = `<div class="result-placeholder" style="color:var(--red)">⚠ ${msg}</div>`;
+    resetBtn();
+  }
+
+  try {
+    const res = await fetch('/api/gerar-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool: toolKey, campos }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (err.trial_limit) { showUpgradeModal(); resetBtn(); return; }
+      showError(err.error || 'Erro ao gerar. Tente novamente.');
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let genId = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = JSON.parse(line.slice(6));
+        if (payload.error) {
+          if (payload.trial_limit) { showUpgradeModal(); resetBtn(); return; }
+          showError(payload.error);
+          return;
+        }
+        if (payload.text) {
+          boxEl.textContent += payload.text;
+        }
+        if (payload.done) {
+          genId = payload.id || null;
+          if (resultActionsEl) resultActionsEl.style.display = 'flex';
+          if (feedbackRowEl) feedbackRowEl.style.display = 'flex';
+          resetBtn();
+          onDone && onDone(genId);
+        }
+      }
+    }
+  } catch {
+    showError('Erro de conexão. Tente novamente.');
+  }
+}
+
 // ── Upgrade modal ──
 function showUpgradeModal() {
   const m = document.getElementById('upgrade-modal');

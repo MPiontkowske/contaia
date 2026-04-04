@@ -61,3 +61,22 @@ def call_claude(
     except Exception as e:
         logger.exception(f"Erro inesperado na chamada Claude: {e}")
         raise RuntimeError("Erro ao processar sua solicitação. Tente novamente.")
+
+
+def stream_claude(
+    system_prompt: str,
+    user_message: str,
+    max_tokens: int = 1024,
+    model: str = "claude-sonnet-4-6",
+    user_api_key: Optional[str] = None,
+):
+    """Gera a resposta em streaming. Yields chunks de texto (str)."""
+    client = _get_client(user_api_key)
+    with client.messages.stream(
+        model=model,
+        max_tokens=max_tokens,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    ) as stream:
+        for text in stream.text_stream:
+            yield text

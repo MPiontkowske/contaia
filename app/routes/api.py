@@ -73,6 +73,81 @@ def api_gerar():
     return jsonify({"resultado": resultado, "id": gen.id})
 
 
+@api_bp.route("/gerar-stream", methods=["POST"])
+@access_required
+@limiter.limit("40 per hour")
+def api_gerar_stream():
+    """Endpoint SSE — retorna a geração em streaming (word-by-word)."""
+    import json as _json
+    from flask import current_app, stream_with_context
+    from ..services.ai import stream_claude
+    from ..services.prompts import build_prompt, auto_title, TOOLS
+
+    user = db.session.get(User, session["user_id"])
+    data = request.get_json(silent=True) or {}
+    tool = data.get("tool", "").strip()
+    campos = data.get("campos", {})
+
+    if not isinstance(campos, dict):
+        return jsonify({"error": "Dados inválidos."}), 400
+    if tool not in TOOLS:
+        return jsonify({"error": "Ferramenta inválida."}), 400
+
+    limit = current_app.config.get("TRIAL_GENERATION_LIMIT", 20)
+    if user.trial_limit_reached(limit):
+        return jsonify({
+            "error": f"Você atingiu o limite de {limit} gerações do trial.",
+            "trial_limit": True,
+        }), 403
+
+    try:
+        system_prompt, user_message, max_tokens, model = build_prompt(tool, campos)
+    except Exception:
+        return jsonify({"error": "Erro ao preparar prompt."}), 500
+
+    def generate():
+        full_text = []
+        try:
+            for chunk in stream_claude(system_prompt, user_message, max_tokens, model,
+                                       user_api_key=user.anthropic_api_key or None):
+                full_text.append(chunk)
+                payload = _json.dumps({"text": chunk}, ensure_ascii=False)
+                yield f"data: {payload}\n\n"
+
+            # Salva a geração completa
+            resultado = "".join(full_text)
+            titulo = auto_title(tool, campos)
+            gen = Generation(
+                user_id=user.id,
+                tool=tool,
+                titulo=titulo,
+                campos_json=_json.dumps(campos, ensure_ascii=False),
+                resultado=resultado,
+            )
+            db.session.add(gen)
+            db.session.commit()
+
+            done_payload = _json.dumps({"done": True, "id": gen.id})
+            yield f"data: {done_payload}\n\n"
+
+        except RuntimeError as e:
+            err_payload = _json.dumps({"error": str(e)})
+            yield f"data: {err_payload}\n\n"
+        except Exception:
+            logger.exception("Erro no stream gerar (tool=%s, user=%s)", tool, user.id)
+            err_payload = _json.dumps({"error": "Erro interno. Tente novamente."})
+            yield f"data: {err_payload}\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # desativa buffer do Nginx
+        },
+    )
+
+
 @api_bp.route("/status/<job_id>", methods=["GET"])
 @login_required
 def api_status(job_id: str):
