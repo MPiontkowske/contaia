@@ -278,7 +278,7 @@ async function gerar() {
   });
 }
 
-function copiarResultado() { const t = document.getElementById('result-box').textContent; if (t) copyText(t); }
+function copiarResultado() { const b = document.getElementById('result-box'); const t = b._rawText || b.textContent; if (t) copyText(t); }
 
 async function favoritarAtual() {
   if (!currentGenId) return;

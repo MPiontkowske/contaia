@@ -338,7 +338,8 @@ async function gerar() {
 }
 
 function copiarResultado() {
-  const txt = document.getElementById('result-box').textContent;
+  const box = document.getElementById('result-box');
+  const txt = box._rawText || box.textContent;
   if (txt) copyText(txt);
 }
 
